@@ -2,26 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  color: var(--foreground);
-  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    /* Fundo levemente azulado/acinzentado do protótipo */
+    --background: 210 20% 98%;
+    --foreground: 224 71% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+
+    /* O Azul Marinho Principal (Botão Adicionar, Cards de Saldo) */
+    --primary: 232 87% 15%; /* #050E4C aproximadamente */
+    --primary-foreground: 210 40% 98%;
+
+    /* Cinza dos cards secundários e bordas */
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 210 20% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Cores de status (Ganhos/Gastos) */
+    --destructive: 0 84% 60%; /* Vermelho dos Gastos */
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 142 70% 45%; /* Verde dos Ganhos */
+    --success-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 232 87% 15%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* O seu protótipo é Light, mas deixo configurado um Dark Mode básico */
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 71% 4%;
+    --card-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+  }
+}
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
