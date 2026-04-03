@@ -13,6 +13,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  
+  // Chave estrangeira para o tipo de usuário
+  typeId    String
+  userType  TypeUser @relation(fields: [typeId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model TypeUser {
+  id       String  @id @default(uuid())
+  label    String  // Corresponde ao 'Typeuser' da sua imagem
+  active   Boolean @default(true) // Corresponde ao 'activ'
+  
+  // Lista de usuários que possuem este tipo
+  users    User[]
+}
+
 model Transaction {
   id            String                   @id @default(uuid())
   name          String
