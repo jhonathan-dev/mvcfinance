@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Select,
   SelectContent,
@@ -6,7 +8,6 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Button } from "./ui/button";
-/* import { Dialog, DialogTrigger } from "@radix-ui/react-dialog"; */
 import {
   Dialog,
   DialogClose,
@@ -27,28 +28,29 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { MoneyInput } from "./money-input";
-import {
-  TRANSACTION_CATEGORY_OPTIONS,
-  TRANSACTION_PAYMENT_METHOD_OPTIONS,
-  TRANSACTION_TYPE_OPTIONS,
-} from "../_constants/operations";
 import { DatePicker } from "./ui/date-picker";
 import z from "zod";
-import {
-  OperationCategory,
-  OperationPaymentMethod,
-  OperationType,
-} from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addOperation } from "../_actions/add-operation/index";
 
-interface UpsertOperationDialogProps {
-  isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
-  defaultValues?: FormSchema;
+// Tipos vindos do banco (id + label)
+interface OperationOption {
+  id: string;
+  label: string;
 }
 
+interface UpsertOperationDialogProps {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  defaultValues?: FormSchema;
+  // Opções vindas do banco
+  types: OperationOption[];
+  categories: OperationOption[];
+  paymentMethods: OperationOption[];
+}
+
+// Schema atualizado: type, category e paymentMethod agora são IDs (string uuid)
 const formSchema = z.object({
   name: z.string().trim().min(1, {
     message: "O nome é obrigatório.",
@@ -56,16 +58,15 @@ const formSchema = z.object({
   amount: z.number().positive({
     message: "O valor é obrigatório.",
   }),
-  type: z.nativeEnum(OperationType, {
+  typeId: z.string().min(1, {
     message: "O tipo é obrigatório.",
   }),
-  category: z.nativeEnum(OperationCategory, {
+  categoryId: z.string().min(1, {
     message: "A categoria é obrigatória.",
   }),
-  paymentMethod: z.nativeEnum(OperationPaymentMethod, {
+  paymentMethodId: z.string().min(1, {
     message: "O método de pagamento é obrigatório.",
   }),
-  // Para Date, use 'message' ou verifique se não há conflito com o objeto
   date: z.date({
     message: "A data é obrigatória.",
   }),
@@ -77,22 +78,24 @@ const UpsertOperationDialog = ({
   isOpen,
   setIsOpen,
   defaultValues,
+  types,
+  categories,
+  paymentMethods,
 }: UpsertOperationDialogProps) => {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues ?? {
       amount: 0,
-      category: OperationCategory.OTHER,
+      categoryId: "",
       date: new Date(),
       name: "",
-      paymentMethod: OperationPaymentMethod.CASH,
-      type: OperationType.EXPENSE,
+      paymentMethodId: "",
+      typeId: "",
     },
   });
 
   const onSubmit = async (data: FormSchema) => {
     try {
-      console.log("Submitting operation:", data);
       await addOperation(data);
       setIsOpen(false);
       form.reset();
@@ -106,21 +109,20 @@ const UpsertOperationDialog = ({
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) {
-          form.reset();
-        }
+        if (!open) form.reset();
       }}
     >
       <DialogTrigger asChild></DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Adicionar Transação</DialogTitle>
+          <DialogTitle>Adicionar Operação</DialogTitle>
           <DialogDescription>
-            Insira as informações da transação
+            Insira as informações da operação
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Nome */}
             <FormField
               control={form.control}
               name="name"
@@ -134,6 +136,8 @@ const UpsertOperationDialog = ({
                 </FormItem>
               )}
             />
+
+            {/* Valor */}
             <FormField
               control={form.control}
               name="amount"
@@ -155,9 +159,11 @@ const UpsertOperationDialog = ({
                 </FormItem>
               )}
             />
+
+            {/* Tipo */}
             <FormField
               control={form.control}
-              name="type"
+              name="typeId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo</FormLabel>
@@ -167,13 +173,13 @@ const UpsertOperationDialog = ({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo de transação" />
+                        <SelectValue placeholder="Selecione o tipo de operação" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {TRANSACTION_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                      {types.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>
+                          {type.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -182,9 +188,11 @@ const UpsertOperationDialog = ({
                 </FormItem>
               )}
             />
+
+            {/* Método de Pagamento */}
             <FormField
               control={form.control}
-              name="paymentMethod"
+              name="paymentMethodId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Método de Pagamento</FormLabel>
@@ -198,9 +206,9 @@ const UpsertOperationDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {TRANSACTION_PAYMENT_METHOD_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                      {paymentMethods.map((method) => (
+                        <SelectItem key={method.id} value={method.id}>
+                          {method.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -209,9 +217,11 @@ const UpsertOperationDialog = ({
                 </FormItem>
               )}
             />
+
+            {/* Categoria */}
             <FormField
               control={form.control}
-              name="category"
+              name="categoryId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Categoria</FormLabel>
@@ -225,9 +235,9 @@ const UpsertOperationDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {TRANSACTION_CATEGORY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -236,6 +246,8 @@ const UpsertOperationDialog = ({
                 </FormItem>
               )}
             />
+
+            {/* Data */}
             <FormField
               control={form.control}
               name="date"
@@ -247,6 +259,7 @@ const UpsertOperationDialog = ({
                 </FormItem>
               )}
             />
+
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">

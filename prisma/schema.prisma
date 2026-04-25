@@ -13,72 +13,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  
-  // Chave estrangeira para o tipo de usuário
-  typeId    String
-  userType  TypeUser @relation(fields: [typeId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-model TypeUser {
-  id       String  @id @default(uuid())
-  label    String  // Corresponde ao 'Typeuser' da sua imagem
-  active   Boolean @default(true) // Corresponde ao 'activ'
-  
-  // Lista de usuários que possuem este tipo
-  users    User[]
-}
 
 model Operation {
-  id            String                   @id @default(uuid())
-  name          String
-  type          OperationType
-  amount        Decimal                  @db.Decimal(10, 2)
-  category      OperationCategory
-  paymentMethod OperationPaymentMethod
-  date          DateTime
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  userId        String
+  id              String                @id @default(uuid())
+  name            String
+  amount          Decimal               @db.Decimal(10, 2)
+  date            DateTime
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  userId          String
 
-  @@map("operations")  // nome da tabela no banco
+  typeId          String
+  type            OperationType         @relation(fields: [typeId], references: [id])
+
+  categoryId      String
+  category        OperationCategory     @relation(fields: [categoryId], references: [id])
+
+  paymentMethodId String
+  paymentMethod   OperationPaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@map("operations")
 }
 
-enum OperationType {
-  DEPOSIT
-  EXPENSE
-  INVESTMENT
+model OperationType {
+  id         String      @id @default(uuid())
+  label      String
+  active     Boolean     @default(true)
+  isDefault  Boolean     @default(false)  // protege os padrões de exclusão
+  userId     String?     // null = global/padrão do sistema
+  operations Operation[]
 
-  @@map("operation_type")
+  @@map("operation_types")
 }
 
-enum OperationCategory {
-  HOUSING
-  TRANSPORTATION
-  FOOD
-  ENTERTAINMENT
-  HEALTH
-  UTILITY
-  SALARY
-  EDUCATION
-  OTHER
+model OperationCategory {
+  id         String      @id @default(uuid())
+  label      String
+  active     Boolean     @default(true)
+  isDefault  Boolean     @default(false)
+  userId     String?
+  operations Operation[]
 
-  @@map("operation_category")
+  @@map("operation_categories")
 }
 
-enum OperationPaymentMethod {
-  CREDIT_CARD
-  DEBIT_CARD
-  BANK_TRANSFER
-  BANK_SLIP
-  CASH
-  PIX
-  OTHER
+model OperationPaymentMethod {
+  id         String      @id @default(uuid())
+  label      String
+  active     Boolean     @default(true)
+  isDefault  Boolean     @default(false)
+  userId     String?
+  operations Operation[]
 
-  @@map("operation_payment_method")
+  @@map("operation_payment_methods")
 }
