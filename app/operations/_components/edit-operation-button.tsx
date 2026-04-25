@@ -1,15 +1,15 @@
 "use client";
 
-import UpsertTransactionDialog from "@/app/_components/upsert-transaction-dialog";
+import UpsertOperationDialog from "@/app/_components/upsert-operation-dialog";
 import { PencilIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "react-day-picker";
 
-interface EditTransactionButtonProps {
-  transaction: Transacation;
+interface EditOperationButtonProps {
+  operation: Transacation;
 }
 
-const EditTransactionButton = ({ transaction }: EditTransactionButtonProps) => {
+const EditOperationButton = ({ operation }: EditOperationButtonProps) => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
   return (
@@ -22,13 +22,13 @@ const EditTransactionButton = ({ transaction }: EditTransactionButtonProps) => {
       >
         <PencilIcon />
       </Button>
-      <UpsertTransactionDialog
+      <UpsertOperationDialog
         isOpen={dialogIsOpen}
         setIsOpen={setDialogIsOpen}
-        defaultValues={{ ...transaction, amount: Number(transaction.amount) }}
+        defaultValues={{ ...operation, amount: Number(operation.amount) }}
       />
     </>
   );
 };
 
-export default EditTransactionButton;
+export default EditOperationButton;

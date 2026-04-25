@@ -1,17 +1,17 @@
 "use client";
 
-import { Transaction } from "@prisma/client";
+import { Operation } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import TransactionTypeBadge from "../_components/type-badge";
+import OperationTypeBadge from "../_components/type-badge";
 import { Button } from "@/app/_components/ui/button";
 import { TrashIcon } from "lucide-react";
 import {
   TRANSACTION_CATEGORY_LABELS,
   TRANSACTION_PAYMENT_METHOD_LABELS,
-} from "@/app/_constants/transactions";
-import EditTransactionButton from "../_components/edit-transaction-button";
+} from "@/app/_constants/operations";
+import EditOperationButton from "../_components/edit-operation-button";
 
-export const transactionsColumns: ColumnDef<Transaction>[] = [
+export const operationsColumns: ColumnDef<Operation>[] = [
   {
     accessorKey: "name",
     header: "Nome",
@@ -19,27 +19,27 @@ export const transactionsColumns: ColumnDef<Transaction>[] = [
   {
     accessorKey: "type",
     header: "Tipo",
-    cell: ({ row: { original: transaction } }) => (
-      <TransactionTypeBadge transaction={transaction} />
+    cell: ({ row: { original: operation } }) => (
+      <OperationTypeBadge operation={operation} />
     ),
   },
   {
     accessorKey: "category",
     header: "Categoria",
-    cell: ({ row: { original: transaction } }) =>
-      TRANSACTION_CATEGORY_LABELS[transaction.category],
+    cell: ({ row: { original: operation } }) =>
+      TRANSACTION_CATEGORY_LABELS[operation.category],
   },
   {
     accessorKey: "paymentMethod",
     header: "Método de Pagamento",
-    cell: ({ row: { original: transaction } }) =>
-      TRANSACTION_PAYMENT_METHOD_LABELS[transaction.paymentMethod],
+    cell: ({ row: { original: operation } }) =>
+      TRANSACTION_PAYMENT_METHOD_LABELS[operation.paymentMethod],
   },
   {
     accessorKey: "date",
     header: "Data",
-    cell: ({ row: { original: transaction } }) =>
-      new Date(transaction.date).toLocaleDateString("pt-BR", {
+    cell: ({ row: { original: operation } }) =>
+      new Date(operation.date).toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "long",
         year: "numeric",
@@ -48,19 +48,19 @@ export const transactionsColumns: ColumnDef<Transaction>[] = [
   {
     accessorKey: "amount",
     header: "Valor",
-    cell: ({ row: { original: transaction } }) =>
+    cell: ({ row: { original: operation } }) =>
       new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
-      }).format(Number(transaction.amount)),
+      }).format(Number(operation.amount)),
   },
   {
     accessorKey: "Actions",
     header: "",
-    cell: ({ row: { original: transaction } }) => {
+    cell: ({ row: { original: operation } }) => {
       return (
         <div className="space-x-1">
-          <EditTransactionButton transaction={transaction} />
+          <EditOperationButton operation={operation} />
           <Button variant="ghost" size="icon" className="text-muted-foreground">
             <TrashIcon />
           </Button>

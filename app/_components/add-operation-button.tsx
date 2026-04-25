@@ -4,9 +4,9 @@ import { ArrowDownUpIcon } from "lucide-react";
 import { Button } from "./ui/button";
 /* import { Dialog, DialogTrigger } from "@radix-ui/react-dialog"; */
 import { useState } from "react";
-import UpsertTransactionDialog from "./upsert-transaction-dialog";
+import UpsertOperationDialog from "./upsert-operation-dialog";
 
-const AddTransactionButton = () => {
+const AddOperationButton = () => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
   return (
@@ -18,7 +18,7 @@ const AddTransactionButton = () => {
         Adicionar transação
         <ArrowDownUpIcon />
       </Button>
-      <UpsertTransactionDialog
+      <UpsertOperationDialog
         isOpen={dialogIsOpen}
         setIsOpen={setDialogIsOpen}
       />
@@ -26,4 +26,4 @@ const AddTransactionButton = () => {
   );
 };
 
-export default AddTransactionButton;
+export default AddOperationButton;

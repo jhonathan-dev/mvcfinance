@@ -34,26 +34,30 @@ model TypeUser {
   users    User[]
 }
 
-model Transaction {
+model Operation {
   id            String                   @id @default(uuid())
   name          String
-  type          TransactionType
+  type          OperationType
   amount        Decimal                  @db.Decimal(10, 2)
-  category      TransactionCategory
-  paymentMethod TransactionPaymentMethod
+  category      OperationCategory
+  paymentMethod OperationPaymentMethod
   date          DateTime
   createdAt     DateTime                 @default(now())
   updatedAt     DateTime                 @updatedAt
   userId        String
+
+  @@map("operations")  // nome da tabela no banco
 }
 
-enum TransactionType {
+enum OperationType {
   DEPOSIT
   EXPENSE
   INVESTMENT
+
+  @@map("operation_type")
 }
 
-enum TransactionCategory {
+enum OperationCategory {
   HOUSING
   TRANSPORTATION
   FOOD
@@ -63,9 +67,11 @@ enum TransactionCategory {
   SALARY
   EDUCATION
   OTHER
+
+  @@map("operation_category")
 }
 
-enum TransactionPaymentMethod {
+enum OperationPaymentMethod {
   CREDIT_CARD
   DEBIT_CARD
   BANK_TRANSFER
@@ -73,4 +79,6 @@ enum TransactionPaymentMethod {
   CASH
   PIX
   OTHER
+
+  @@map("operation_payment_method")
 }

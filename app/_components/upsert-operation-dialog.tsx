@@ -31,19 +31,19 @@ import {
   TRANSACTION_CATEGORY_OPTIONS,
   TRANSACTION_PAYMENT_METHOD_OPTIONS,
   TRANSACTION_TYPE_OPTIONS,
-} from "../_constants/transactions";
+} from "../_constants/operations";
 import { DatePicker } from "./ui/date-picker";
 import z from "zod";
 import {
-  TransactionCategory,
-  TransactionPaymentMethod,
-  TransactionType,
+  OperationCategory,
+  OperationPaymentMethod,
+  OperationType,
 } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addTransaction } from "../_actions/add-transaction/indext";
+import { addOperation } from "../_actions/add-operation/index";
 
-interface UpsertTransactionDialogProps {
+interface UpsertOperationDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   defaultValues?: FormSchema;
@@ -56,13 +56,13 @@ const formSchema = z.object({
   amount: z.number().positive({
     message: "O valor é obrigatório.",
   }),
-  type: z.nativeEnum(TransactionType, {
+  type: z.nativeEnum(OperationType, {
     message: "O tipo é obrigatório.",
   }),
-  category: z.nativeEnum(TransactionCategory, {
+  category: z.nativeEnum(OperationCategory, {
     message: "A categoria é obrigatória.",
   }),
-  paymentMethod: z.nativeEnum(TransactionPaymentMethod, {
+  paymentMethod: z.nativeEnum(OperationPaymentMethod, {
     message: "O método de pagamento é obrigatório.",
   }),
   // Para Date, use 'message' ou verifique se não há conflito com o objeto
@@ -73,27 +73,27 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>;
 
-const UpsertTransactionDialog = ({
+const UpsertOperationDialog = ({
   isOpen,
   setIsOpen,
   defaultValues,
-}: UpsertTransactionDialogProps) => {
+}: UpsertOperationDialogProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues ?? {
       amount: 0,
-      category: TransactionCategory.OTHER,
+      category: OperationCategory.OTHER,
       date: new Date(),
       name: "",
-      paymentMethod: TransactionPaymentMethod.CASH,
-      type: TransactionType.EXPENSE,
+      paymentMethod: OperationPaymentMethod.CASH,
+      type: OperationType.EXPENSE,
     },
   });
 
   const onSubmit = async (data: FormSchema) => {
     try {
-      console.log("Submitting transaction:", data);
-      await addTransaction(data);
+      console.log("Submitting operation:", data);
+      await addOperation(data);
       setIsOpen(false);
       form.reset();
     } catch (error) {
@@ -262,4 +262,4 @@ const UpsertTransactionDialog = ({
   );
 };
 
-export default UpsertTransactionDialog;
+export default UpsertOperationDialog;
