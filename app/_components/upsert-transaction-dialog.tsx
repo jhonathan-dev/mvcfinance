@@ -41,12 +41,13 @@ import {
 } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addTransaction } from "../_actions/add-transaction/indext";
+import { upsertTransaction } from "../_actions/add-transaction/indext";
 
 interface UpsertTransactionDialogProps {
   isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
   defaultValues?: FormSchema;
+  transactionId?: string;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
 const formSchema = z.object({
@@ -77,6 +78,7 @@ const UpsertTransactionDialog = ({
   isOpen,
   setIsOpen,
   defaultValues,
+  transactionId,
 }: UpsertTransactionDialogProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,13 +95,15 @@ const UpsertTransactionDialog = ({
   const onSubmit = async (data: FormSchema) => {
     try {
       console.log("Submitting transaction:", data);
-      await addTransaction(data);
+      await upsertTransaction({ ...data, id: transactionId });
       setIsOpen(false);
       form.reset();
     } catch (error) {
       console.error(error);
     }
   };
+
+  const isUpdate = Boolean(transactionId);
 
   return (
     <Dialog
@@ -114,7 +118,9 @@ const UpsertTransactionDialog = ({
       <DialogTrigger asChild></DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Adicionar Transação</DialogTitle>
+          <DialogTitle>
+            {isUpdate ? "Editar" : "Adicionar"} Transação
+          </DialogTitle>
           <DialogDescription>
             Insira as informações da transação
           </DialogDescription>
@@ -253,7 +259,9 @@ const UpsertTransactionDialog = ({
                   Cancelar
                 </Button>
               </DialogClose>
-              <Button type="submit">Adicionar</Button>
+              <Button type="submit">
+                {isUpdate ? "Atualizar" : "Adicionar"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

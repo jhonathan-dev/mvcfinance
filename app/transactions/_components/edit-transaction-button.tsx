@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button } from "react-day-picker";
 
 interface EditTransactionButtonProps {
-  transaction: Transacation;
+  transaction: Transaction;
 }
 
 const EditTransactionButton = ({ transaction }: EditTransactionButtonProps) => {
@@ -26,6 +26,7 @@ const EditTransactionButton = ({ transaction }: EditTransactionButtonProps) => {
         isOpen={dialogIsOpen}
         setIsOpen={setDialogIsOpen}
         defaultValues={{ ...transaction, amount: Number(transaction.amount) }}
+        transactionId={transaction.id}
       />
     </>
   );
