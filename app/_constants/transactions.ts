@@ -5,15 +5,37 @@ import {
 } from "@prisma/client";
 
 export const TRANSACTION_CATEGORY_LABELS = {
-  EDUCATION: "Educação",
-  ENTERTAINMENT: "Entretenimento",
+  // EXPENSE
+  HOUSING: "Moradia",
+  TRANSPORTATION: "Transporte",
   FOOD: "Alimentação",
   HEALTH: "Saúde",
-  HOUSING: "Moradia",
-  OTHER: "Outros",
+  EDUCATION: "Educação",
+  ENTERTAINMENT: "Entretenimento",
+  CLOTHING: "Vestuário",
+  BEAUTY: "Beleza e Cuidados Pessoais",
+  PETS: "Pets",
+  TRAVEL: "Viagens",
+  SUBSCRIPTIONS: "Assinaturas e Streaming",
+  PHONE_INTERNET: "Telefone e Internet",
+  ENERGY_WATER: "Energia e Água",
+  TAXES: "Impostos e Taxas",
+  INSURANCE: "Seguros",
+  // DEPOSIT
   SALARY: "Salário",
-  TRANSPORTATION: "Transporte",
-  UTILITY: "Utilidades",
+  FREELANCE: "Freelance",
+  RENTAL_INCOME: "Aluguel Recebido",
+  DIVIDENDS: "Dividendos",
+  REFUND: "Reembolso",
+  GIFT_RECEIVED: "Presente Recebido",
+  ASSET_SALE: "Venda de Bens",
+  // INVESTMENT
+  FIXED_INCOME: "Renda Fixa",
+  VARIABLE_INCOME: "Renda Variável",
+  REAL_ESTATE_FUNDS: "Fundos Imobiliários",
+  CRYPTO: "Criptomoedas",
+  PRIVATE_PENSION: "Previdência Privada",
+  SAVINGS: "Poupança",
 };
 
 export const TRANSACTION_PAYMENT_METHOD_ICONS = {
@@ -23,7 +45,6 @@ export const TRANSACTION_PAYMENT_METHOD_ICONS = {
   BANK_SLIP: "bank-slip.svg",
   CASH: "money.svg",
   PIX: "pix.svg",
-  OTHER: "other.svg",
 };
 
 export const TRANSACTION_PAYMENT_METHOD_LABELS = {
@@ -32,23 +53,13 @@ export const TRANSACTION_PAYMENT_METHOD_LABELS = {
   CASH: "Dinheiro",
   CREDIT_CARD: "Cartão de Crédito",
   DEBIT_CARD: "Cartão de Débito",
-  OTHER: "Outros",
   PIX: "Pix",
 };
 
 export const TRANSACTION_TYPE_OPTIONS = [
-  {
-    value: TransactionType.EXPENSE,
-    label: "Despesa",
-  },
-  {
-    value: TransactionType.DEPOSIT,
-    label: "Depósito",
-  },
-  {
-    value: TransactionType.INVESTMENT,
-    label: "Investimento",
-  },
+  { value: TransactionType.EXPENSE, label: "Despesa" },
+  { value: TransactionType.DEPOSIT, label: "Depósito" },
+  { value: TransactionType.INVESTMENT, label: "Investimento" },
 ];
 
 export const TRANSACTION_PAYMENT_METHOD_OPTIONS = [
@@ -77,23 +88,20 @@ export const TRANSACTION_PAYMENT_METHOD_OPTIONS = [
       TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.DEBIT_CARD],
   },
   {
-    value: TransactionPaymentMethod.OTHER,
-    label: TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.OTHER],
-  },
-  {
     value: TransactionPaymentMethod.PIX,
     label: TRANSACTION_PAYMENT_METHOD_LABELS[TransactionPaymentMethod.PIX],
   },
 ];
 
 export const TRANSACTION_CATEGORY_OPTIONS = [
+  // EXPENSE
   {
-    value: TransactionCategory.EDUCATION,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.EDUCATION],
+    value: TransactionCategory.HOUSING,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.HOUSING],
   },
   {
-    value: TransactionCategory.ENTERTAINMENT,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.ENTERTAINMENT],
+    value: TransactionCategory.TRANSPORTATION,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.TRANSPORTATION],
   },
   {
     value: TransactionCategory.FOOD,
@@ -104,23 +112,101 @@ export const TRANSACTION_CATEGORY_OPTIONS = [
     label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.HEALTH],
   },
   {
-    value: TransactionCategory.HOUSING,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.HOUSING],
+    value: TransactionCategory.EDUCATION,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.EDUCATION],
   },
   {
-    value: TransactionCategory.OTHER,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.OTHER],
+    value: TransactionCategory.ENTERTAINMENT,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.ENTERTAINMENT],
   },
+  {
+    value: TransactionCategory.CLOTHING,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.CLOTHING],
+  },
+  {
+    value: TransactionCategory.BEAUTY,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.BEAUTY],
+  },
+  {
+    value: TransactionCategory.PETS,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.PETS],
+  },
+  {
+    value: TransactionCategory.TRAVEL,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.TRAVEL],
+  },
+  {
+    value: TransactionCategory.SUBSCRIPTIONS,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.SUBSCRIPTIONS],
+  },
+  {
+    value: TransactionCategory.PHONE_INTERNET,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.PHONE_INTERNET],
+  },
+  {
+    value: TransactionCategory.ENERGY_WATER,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.ENERGY_WATER],
+  },
+  {
+    value: TransactionCategory.TAXES,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.TAXES],
+  },
+  {
+    value: TransactionCategory.INSURANCE,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.INSURANCE],
+  },
+  // DEPOSIT
   {
     value: TransactionCategory.SALARY,
     label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.SALARY],
   },
   {
-    value: TransactionCategory.TRANSPORTATION,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.TRANSPORTATION],
+    value: TransactionCategory.FREELANCE,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.FREELANCE],
   },
   {
-    value: TransactionCategory.UTILITY,
-    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.UTILITY],
+    value: TransactionCategory.RENTAL_INCOME,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.RENTAL_INCOME],
+  },
+  {
+    value: TransactionCategory.DIVIDENDS,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.DIVIDENDS],
+  },
+  {
+    value: TransactionCategory.REFUND,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.REFUND],
+  },
+  {
+    value: TransactionCategory.GIFT_RECEIVED,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.GIFT_RECEIVED],
+  },
+  {
+    value: TransactionCategory.ASSET_SALE,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.ASSET_SALE],
+  },
+  // INVESTMENT
+  {
+    value: TransactionCategory.FIXED_INCOME,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.FIXED_INCOME],
+  },
+  {
+    value: TransactionCategory.VARIABLE_INCOME,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.VARIABLE_INCOME],
+  },
+  {
+    value: TransactionCategory.REAL_ESTATE_FUNDS,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.REAL_ESTATE_FUNDS],
+  },
+  {
+    value: TransactionCategory.CRYPTO,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.CRYPTO],
+  },
+  {
+    value: TransactionCategory.PRIVATE_PENSION,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.PRIVATE_PENSION],
+  },
+  {
+    value: TransactionCategory.SAVINGS,
+    label: TRANSACTION_CATEGORY_LABELS[TransactionCategory.SAVINGS],
   },
 ];
