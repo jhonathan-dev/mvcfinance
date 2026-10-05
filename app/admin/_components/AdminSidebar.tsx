@@ -8,6 +8,10 @@ import {
   Tags,
   CreditCard,
   BookOpen,
+  Trophy,
+  Sparkles,
+  Shapes,
+  Wallet,
   ArrowLeft,
 } from "lucide-react";
 
@@ -15,7 +19,15 @@ const items = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/cursos", label: "Cursos", icon: BookOpen },
   { href: "/admin/temas", label: "Temas de Curso", icon: FolderTree },
+  { href: "/admin/conquistas", label: "Conquistas", icon: Trophy },
+  {
+    href: "/admin/configuracao-xp",
+    label: "Configuração de XP",
+    icon: Sparkles,
+  },
+  { href: "/admin/planos", label: "Planos", icon: Wallet },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },
+  { href: "/admin/tipos-operacao", label: "Tipos de Operação", icon: Shapes },
   {
     href: "/admin/metodos-pagamento",
     label: "Métodos de Pagamento",

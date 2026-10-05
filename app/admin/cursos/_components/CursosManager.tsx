@@ -32,7 +32,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/_components/ui/dialog";
-import { Plus, Pencil, Power, Trash2, BookOpen, ListTree } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Power,
+  Trash2,
+  BookOpen,
+  ListTree,
+  HelpCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   upsertCurso,
@@ -209,6 +217,16 @@ const CursosManager = ({ cursos, temas }: CursosManagerProps) => {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    title="Questionário"
+                  >
+                    <Link href={`/admin/cursos/${c.id}/questionario`}>
+                      <HelpCircle className="h-4 w-4" />
+                    </Link>
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"

@@ -6,14 +6,33 @@ import {
   CardHeader,
   CardTitle,
 } from "../_components/ui/card";
-import { FolderTree, Tags, CreditCard, BookOpen } from "lucide-react";
+import {
+  FolderTree,
+  Tags,
+  CreditCard,
+  BookOpen,
+  Trophy,
+  Wallet,
+  Shapes,
+} from "lucide-react";
 import PageHeader from "./_components/PageHeader";
 
 const AdminDashboard = async () => {
-  const [cursos, temas, categoriasAtivas, metodosAtivos] = await Promise.all([
+  const [
+    cursos,
+    temas,
+    conquistas,
+    planosAtivos,
+    categoriasAtivas,
+    tiposAtivos,
+    metodosAtivos,
+  ] = await Promise.all([
     db.curso.count(),
     db.temaCurso.count(),
+    db.conquista.count(),
+    db.plano.count({ where: { ativo: true } }),
     db.categoria.count({ where: { ativo: true } }),
+    db.tipoOperacao.count({ where: { ativo: true } }),
     db.metodoPagamento.count({ where: { ativo: true } }),
   ]);
 
@@ -33,11 +52,32 @@ const AdminDashboard = async () => {
       color: "text-purple-600",
     },
     {
+      label: "Conquistas",
+      value: conquistas,
+      icon: Trophy,
+      href: "/admin/conquistas",
+      color: "text-yellow-600",
+    },
+    {
+      label: "Planos Ativos",
+      value: planosAtivos,
+      icon: Wallet,
+      href: "/admin/planos",
+      color: "text-rose-600",
+    },
+    {
       label: "Categorias Ativas",
       value: categoriasAtivas,
       icon: Tags,
       href: "/admin/categorias",
       color: "text-emerald-600",
+    },
+    {
+      label: "Tipos de Operação Ativos",
+      value: tiposAtivos,
+      icon: Shapes,
+      href: "/admin/tipos-operacao",
+      color: "text-cyan-600",
     },
     {
       label: "Métodos Ativos",
@@ -76,8 +116,15 @@ const AdminDashboard = async () => {
         })}
       </div>
       <p className="mt-8 text-sm text-muted-foreground">
-        Módulos e Lições já são gerenciados dentro de cada curso. Questionário,
-        Conquistas e Planos entram no painel em uma próxima etapa.
+        Módulos, Lições e Questionário são gerenciados dentro de cada curso
+        (botões na listagem de Cursos). A Configuração de XP fica em{" "}
+        <Link
+          href="/admin/configuracao-xp"
+          className="font-medium text-primary underline"
+        >
+          Configuração de XP
+        </Link>
+        .
       </p>
     </div>
   );
