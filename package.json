@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "prepare": "husky",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:conteudo": "tsx prisma/seed-conteudo-educacional.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
