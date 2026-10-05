@@ -44,7 +44,19 @@ const Navbar = () => {
         </Link>
       </div>
       {/* DIREITA */}
-      <UserButton showName />
+      <div className="flex items-center gap-4">
+        <Link
+          href="/admin"
+          className={
+            pathname.startsWith("/admin")
+              ? "font-bold text-primary"
+              : "text-sm text-muted-foreground hover:text-foreground"
+          }
+        >
+          Admin
+        </Link>
+        <UserButton showName />
+      </div>
     </nav>
   );
 };

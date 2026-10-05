@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Select,
   SelectContent,
@@ -6,7 +8,6 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Button } from "./ui/button";
-/* import { Dialog, DialogTrigger } from "@radix-ui/react-dialog"; */
 import {
   Dialog,
   DialogClose,
@@ -27,75 +28,51 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { MoneyInput } from "./money-input";
-import {
-  TRANSACTION_CATEGORY_OPTIONS,
-  TRANSACTION_PAYMENT_METHOD_OPTIONS,
-  TRANSACTION_TYPE_OPTIONS,
-} from "../_constants/transactions";
 import { DatePicker } from "./ui/date-picker";
-import z from "zod";
-import {
-  TransactionCategory,
-  TransactionPaymentMethod,
-  TransactionType,
-} from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { upsertTransaction } from "../_actions/add-transaction/indext";
+import { upsertTransaction } from "../_actions/add-transaction";
+import {
+  UpsertOperacaoSchema,
+  upsertOperacaoSchema,
+} from "../_actions/add-transaction/schema";
+import { OpcoesOperacao } from "../_data/get-opcoes-operacao";
+import { useMemo } from "react";
 
 interface UpsertTransactionDialogProps {
   isOpen: boolean;
-  defaultValues?: FormSchema;
-  transactionId?: string;
+  defaultValues?: UpsertOperacaoSchema;
   setIsOpen: (isOpen: boolean) => void;
+  opcoes: OpcoesOperacao;
 }
-
-const formSchema = z.object({
-  name: z.string().trim().min(1, {
-    message: "O nome é obrigatório.",
-  }),
-  amount: z.number().positive({
-    message: "O valor é obrigatório.",
-  }),
-  type: z.nativeEnum(TransactionType, {
-    message: "O tipo é obrigatório.",
-  }),
-  category: z.nativeEnum(TransactionCategory, {
-    message: "A categoria é obrigatória.",
-  }),
-  paymentMethod: z.nativeEnum(TransactionPaymentMethod, {
-    message: "O método de pagamento é obrigatório.",
-  }),
-  // Para Date, use 'message' ou verifique se não há conflito com o objeto
-  date: z.date({
-    message: "A data é obrigatória.",
-  }),
-});
-
-type FormSchema = z.infer<typeof formSchema>;
 
 const UpsertTransactionDialog = ({
   isOpen,
   setIsOpen,
   defaultValues,
-  transactionId,
+  opcoes,
 }: UpsertTransactionDialogProps) => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<UpsertOperacaoSchema>({
+    resolver: zodResolver(upsertOperacaoSchema),
     defaultValues: defaultValues ?? {
-      amount: 0,
-      category: TransactionCategory.OTHER,
-      date: new Date(),
-      name: "",
-      paymentMethod: TransactionPaymentMethod.CASH,
-      type: TransactionType.EXPENSE,
+      valor: 0,
+      categoriaId: opcoes.categorias[0]?.id ?? "",
+      data: new Date(),
+      titulo: "",
+      metodoPagamentoId: opcoes.metodos[0]?.id ?? "",
+      tipoOperacaoId: opcoes.tipos[0]?.id ?? "",
     },
   });
 
-  const onSubmit = async (data: FormSchema) => {
+  const tipoSelecionado = form.watch("tipoOperacaoId");
+  const categoriasDoTipo = useMemo(
+    () => opcoes.categorias.filter((c) => c.tipoOperacaoId === tipoSelecionado),
+    [opcoes.categorias, tipoSelecionado],
+  );
+
+  const onSubmit = async (data: UpsertOperacaoSchema) => {
     try {
-      console.log("Submitting transaction:", data);
-      await upsertTransaction({ ...data, id: transactionId });
+      await upsertTransaction(data);
       setIsOpen(false);
       form.reset();
     } catch (error) {
@@ -103,7 +80,7 @@ const UpsertTransactionDialog = ({
     }
   };
 
-  const isUpdate = Boolean(transactionId);
+  const isUpdate = Boolean(defaultValues?.id);
 
   return (
     <Dialog
@@ -119,17 +96,17 @@ const UpsertTransactionDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isUpdate ? "Editar" : "Adicionar"} Transação
+            {isUpdate ? "Editar" : "Adicionar"} Operação
           </DialogTitle>
           <DialogDescription>
-            Insira as informações da transação
+            Insira as informações da operação
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="name"
+              name="titulo"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
@@ -142,7 +119,7 @@ const UpsertTransactionDialog = ({
             />
             <FormField
               control={form.control}
-              name="amount"
+              name="valor"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Valor</FormLabel>
@@ -163,23 +140,26 @@ const UpsertTransactionDialog = ({
             />
             <FormField
               control={form.control}
-              name="type"
+              name="tipoOperacaoId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue("categoriaId", "");
+                    }}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo de transação" />
+                        <SelectValue placeholder="Selecione o tipo de operação" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {TRANSACTION_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                      {opcoes.tipos.map((tipo) => (
+                        <SelectItem key={tipo.id} value={tipo.id}>
+                          {tipo.tipo}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -190,7 +170,7 @@ const UpsertTransactionDialog = ({
             />
             <FormField
               control={form.control}
-              name="paymentMethod"
+              name="metodoPagamentoId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Método de Pagamento</FormLabel>
@@ -204,9 +184,9 @@ const UpsertTransactionDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {TRANSACTION_PAYMENT_METHOD_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                      {opcoes.metodos.map((metodo) => (
+                        <SelectItem key={metodo.id} value={metodo.id}>
+                          {metodo.nome}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -217,7 +197,7 @@ const UpsertTransactionDialog = ({
             />
             <FormField
               control={form.control}
-              name="category"
+              name="categoriaId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Categoria</FormLabel>
@@ -231,9 +211,9 @@ const UpsertTransactionDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {TRANSACTION_CATEGORY_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                      {categoriasDoTipo.map((categoria) => (
+                        <SelectItem key={categoria.id} value={categoria.id}>
+                          {categoria.nome}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -244,7 +224,7 @@ const UpsertTransactionDialog = ({
             />
             <FormField
               control={form.control}
-              name="date"
+              name="data"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Data</FormLabel>

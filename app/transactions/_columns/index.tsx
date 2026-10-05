@@ -1,66 +1,78 @@
 "use client";
 
-import { Transaction } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import TransactionTypeBadge from "../_components/type-badge";
-import {
-  TRANSACTION_CATEGORY_LABELS,
-  TRANSACTION_PAYMENT_METHOD_LABELS,
-} from "@/app/_constants/transactions";
+import OperacaoTipoBadge from "../_components/type-badge";
 import EditTransactionButton from "../_components/edit-transaction-button";
 import DeleteTransactionButton from "../_components/delete-trasaction-button";
+import { OpcoesOperacao } from "@/app/_data/get-opcoes-operacao";
 
-export const transactionsColumns: ColumnDef<Transaction>[] = [
+export type OperacaoComRelacoes = Prisma.OperacaoGetPayload<{
+  include: { categoria: true; tipoOperacao: true; metodoPagamento: true };
+}>;
+
+export const getTransactionsColumns = (
+  opcoes: OpcoesOperacao,
+): ColumnDef<OperacaoComRelacoes>[] => [
   {
-    accessorKey: "name",
+    accessorKey: "titulo",
     header: "Nome",
   },
   {
-    accessorKey: "type",
+    accessorKey: "tipoOperacao",
     header: "Tipo",
-    cell: ({ row: { original: transaction } }) => (
-      <TransactionTypeBadge transaction={transaction} />
+    cell: ({ row: { original: operacao } }) => (
+      <OperacaoTipoBadge tipo={operacao.tipoOperacao.tipo} />
     ),
   },
   {
-    accessorKey: "category",
+    accessorKey: "categoria",
     header: "Categoria",
-    cell: ({ row: { original: transaction } }) =>
-      TRANSACTION_CATEGORY_LABELS[transaction.category],
+    cell: ({ row: { original: operacao } }) => operacao.categoria.nome,
   },
   {
-    accessorKey: "paymentMethod",
+    accessorKey: "metodoPagamento",
     header: "Método de Pagamento",
-    cell: ({ row: { original: transaction } }) =>
-      TRANSACTION_PAYMENT_METHOD_LABELS[transaction.paymentMethod],
+    cell: ({ row: { original: operacao } }) => operacao.metodoPagamento.nome,
   },
   {
-    accessorKey: "date",
+    accessorKey: "data",
     header: "Data",
-    cell: ({ row: { original: transaction } }) =>
-      new Date(transaction.date).toLocaleDateString("pt-BR", {
+    cell: ({ row: { original: operacao } }) =>
+      new Date(operacao.data).toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "long",
         year: "numeric",
       }),
   },
   {
-    accessorKey: "amount",
+    accessorKey: "valor",
     header: "Valor",
-    cell: ({ row: { original: transaction } }) =>
+    cell: ({ row: { original: operacao } }) =>
       new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
-      }).format(Number(transaction.amount)),
+      }).format(Number(operacao.valor)),
   },
   {
     accessorKey: "Actions",
     header: "",
-    cell: ({ row: { original: transaction } }) => {
+    cell: ({ row: { original: operacao } }) => {
       return (
         <div className="space-x-1">
-          <EditTransactionButton transaction={transaction} />
-          <DeleteTransactionButton transactionId={transaction.id} />
+          <EditTransactionButton
+            opcoes={opcoes}
+            defaultValues={{
+              id: operacao.id,
+              titulo: operacao.titulo,
+              valor: Number(operacao.valor),
+              tipoOperacaoId: operacao.tipoOperacaoId,
+              categoriaId: operacao.categoriaId,
+              metodoPagamentoId: operacao.metodoPagamentoId,
+              data: new Date(operacao.data),
+            }}
+          />
+          <DeleteTransactionButton operacaoId={operacao.id} />
         </div>
       );
     },

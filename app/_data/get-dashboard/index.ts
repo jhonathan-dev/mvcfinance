@@ -1,94 +1,94 @@
 import { db } from "@/app/_lib/prisma";
-import { TransactionType } from "@prisma/client";
-import { TotalExpensePerCategory, TransactionPercentagePerType } from "./types";
 import { auth } from "@clerk/nextjs/server";
+import { PercentualPorTipo, TotalPorCategoria } from "./types";
 
 export const getDashboard = async (month: string) => {
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
   }
+
+  const tipos = await db.tipoOperacao.findMany();
+  const tipoDeposito = tipos.find((t) => t.tipo === "Depósito");
+  const tipoDespesa = tipos.find((t) => t.tipo === "Despesa");
+  const tipoInvestimento = tipos.find((t) => t.tipo === "Investimento");
+
   const where = {
-    userId,
-    date: {
+    usuarioId: userId,
+    data: {
       gte: new Date(`2026-${month}-01`),
       lt: new Date(`2026-${month}-31`),
     },
   };
-  const depositsTotal = Number(
-    (
-      await db.transaction.aggregate({
-        where: { ...where, type: "DEPOSIT" },
-        _sum: { amount: true },
-      })
-    )?._sum?.amount,
+
+  const somarPorTipo = async (tipoOperacaoId?: string) =>
+    Number(
+      (
+        await db.operacao.aggregate({
+          where: { ...where, tipoOperacaoId },
+          _sum: { valor: true },
+        })
+      )._sum.valor ?? 0,
+    );
+
+  const depositosTotal = await somarPorTipo(tipoDeposito?.id);
+  const investimentosTotal = await somarPorTipo(tipoInvestimento?.id);
+  const despesasTotal = await somarPorTipo(tipoDespesa?.id);
+  const balance = depositosTotal - investimentosTotal - despesasTotal;
+
+  const operacoesTotal = Number(
+    (await db.operacao.aggregate({ where, _sum: { valor: true } }))._sum
+      .valor ?? 0,
   );
-  const investmentsTotal = Number(
-    (
-      await db.transaction.aggregate({
-        where: { ...where, type: "INVESTMENT" },
-        _sum: { amount: true },
-      })
-    )?._sum?.amount,
-  );
-  const expensesTotal = Number(
-    (
-      await db.transaction.aggregate({
-        where: { ...where, type: "EXPENSE" },
-        _sum: { amount: true },
-      })
-    )?._sum?.amount,
-  );
-  const balance = depositsTotal - investmentsTotal - expensesTotal;
-  const transactionsTotal = Number(
-    (
-      await db.transaction.aggregate({
-        where,
-        _sum: { amount: true },
-      })
-    )._sum.amount,
-  );
-  const typesPercentage: TransactionPercentagePerType = {
-    [TransactionType.DEPOSIT]: Math.round(
-      (Number(depositsTotal || 0) / Number(transactionsTotal)) * 100,
-    ),
-    [TransactionType.EXPENSE]: Math.round(
-      (Number(expensesTotal || 0) / Number(transactionsTotal)) * 100,
-    ),
-    [TransactionType.INVESTMENT]: Math.round(
-      (Number(investmentsTotal || 0) / Number(transactionsTotal)) * 100,
-    ),
-  };
-  const totalExpensePerCategory: TotalExpensePerCategory[] = (
-    await db.transaction.groupBy({
-      by: ["category"],
-      where: {
-        ...where,
-        type: TransactionType.EXPENSE,
-      },
-      _sum: {
-        amount: true,
-      },
-    })
-  ).map((category) => ({
-    category: category.category,
-    totalAmount: Number(category._sum.amount),
-    percentageOfTotal: Math.round(
-      (Number(category._sum.amount) / Number(expensesTotal)) * 100,
-    ),
-  }));
-  const lastTransactions = await db.transaction.findMany({
-    where,
-    orderBy: { date: "desc" },
-    take: 15,
+
+  const percentual = (valor: number) =>
+    operacoesTotal > 0 ? Math.round((valor / operacoesTotal) * 100) : 0;
+
+  const percentualPorTipo: PercentualPorTipo[] = [
+    { tipo: "Depósito", percentual: percentual(depositosTotal) },
+    { tipo: "Despesa", percentual: percentual(despesasTotal) },
+    { tipo: "Investimento", percentual: percentual(investimentosTotal) },
+  ];
+
+  const agrupadoPorCategoria = await db.operacao.groupBy({
+    by: ["categoriaId"],
+    where: { ...where, tipoOperacaoId: tipoDespesa?.id },
+    _sum: { valor: true },
   });
+  const categoriasEnvolvidas = await db.categoria.findMany({
+    where: { id: { in: agrupadoPorCategoria.map((c) => c.categoriaId) } },
+  });
+  const totalPorCategoria: TotalPorCategoria[] = agrupadoPorCategoria.map(
+    (c) => {
+      const valorTotal = Number(c._sum.valor ?? 0);
+      return {
+        categoriaId: c.categoriaId,
+        categoriaNome:
+          categoriasEnvolvidas.find((cat) => cat.id === c.categoriaId)?.nome ??
+          "—",
+        valorTotal,
+        percentualDoTotal:
+          despesasTotal > 0
+            ? Math.round((valorTotal / despesasTotal) * 100)
+            : 0,
+      };
+    },
+  );
+
+  const ultimasOperacoes = await db.operacao.findMany({
+    where,
+    orderBy: { data: "desc" },
+    take: 15,
+    include: { categoria: true, tipoOperacao: true, metodoPagamento: true },
+  });
+
   return {
     balance,
-    depositsTotal,
-    investmentsTotal,
-    expensesTotal,
-    typesPercentage,
-    totalExpensePerCategory,
-    lastTransactions: JSON.parse(JSON.stringify(lastTransactions)),
+    depositosTotal,
+    investimentosTotal,
+    despesasTotal,
+    percentualPorTipo,
+    totalPorCategoria,
+    ultimasOperacoes: JSON.parse(JSON.stringify(ultimasOperacoes)),
   };
 };

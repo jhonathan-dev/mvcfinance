@@ -4,12 +4,18 @@ import { Button } from "@/app/_components/ui/button";
 import UpsertTransactionDialog from "@/app/_components/upsert-transaction-dialog";
 import { PencilIcon } from "lucide-react";
 import { useState } from "react";
+import { OpcoesOperacao } from "@/app/_data/get-opcoes-operacao";
+import { UpsertOperacaoSchema } from "@/app/_actions/add-transaction/schema";
 
 interface EditTransactionButtonProps {
-  transaction: Transaction;
+  defaultValues: UpsertOperacaoSchema;
+  opcoes: OpcoesOperacao;
 }
 
-const EditTransactionButton = ({ transaction }: EditTransactionButtonProps) => {
+const EditTransactionButton = ({
+  defaultValues,
+  opcoes,
+}: EditTransactionButtonProps) => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
   return (
@@ -25,8 +31,8 @@ const EditTransactionButton = ({ transaction }: EditTransactionButtonProps) => {
       <UpsertTransactionDialog
         isOpen={dialogIsOpen}
         setIsOpen={setDialogIsOpen}
-        defaultValues={{ ...transaction, amount: Number(transaction.amount) }}
-        transactionId={transaction.id}
+        defaultValues={defaultValues}
+        opcoes={opcoes}
       />
     </>
   );

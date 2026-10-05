@@ -7,64 +7,358 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Transaction {
-  id            String                   @id @default(uuid())
-  name          String
-  type          TransactionType
-  amount        Decimal                  @db.Decimal(10, 2)
-  category      TransactionCategory
-  paymentMethod TransactionPaymentMethod
-  date          DateTime
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  userId        String
+// ============================================================
+// USUÁRIO
+// ============================================================
+// Ponte com o Clerk enquanto a autenticação não é migrada para
+// dentro do próprio sistema. Quando o Clerk for descontinuado,
+// os campos emailUsuario/senhaUsuario passam a ser preenchidos
+// e usados de fato; por enquanto ficam opcionais e não usados.
+//
+// imgUsuario guarda a URL do arquivo hospedado no Vercel Blob
+// (upload real, não mais um caminho estático em /public).
+model Usuario {
+  id           String   @id @default(uuid())
+  clerkId      String   @unique
+  nomeUsuario  String?
+  imgUsuario   String?
+  emailUsuario String?  @unique
+  senhaUsuario String? // hash — reservado para quando sair do Clerk
+  premium      Boolean  @default(false)
+  totalXp      Int      @default(0)
+  cursoAtualId String?
+  licaoAtualId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cursoAtual Curso? @relation("UsuarioCursoAtual", fields: [cursoAtualId], references: [id])
+  licaoAtual Licao? @relation("UsuarioLicaoAtual", fields: [licaoAtualId], references: [id])
+
+  auditorias             Auditoria[]
+  anotacoes              AnotacaoLicao[]
+  progressoLicoes        ProgressoUsuarioLicao[]
+  progressoQuestionarios ProgressoUsuarioQuestionario[]
+  progressoConquistas    ProgressoUsuarioConquista[]
+  calculosProgresso      CalculoDeProgresso[]
 }
 
-enum TransactionType {
-  DEPOSIT
-  EXPENSE
-  INVESTMENT
+model Auditoria {
+  id        String   @id @default(uuid())
+  data      DateTime @default(now()) @db.Date
+  hora      DateTime @default(now()) @db.Time
+  descricao String
+  usuarioId String
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 }
 
-enum TransactionCategory {
-  // EXPENSE
-  HOUSING
-  TRANSPORTATION
-  FOOD
-  HEALTH
-  EDUCATION
-  ENTERTAINMENT
-  CLOTHING
-  BEAUTY
-  PETS
-  TRAVEL
-  SUBSCRIPTIONS
-  PHONE_INTERNET
-  ENERGY_WATER
-  TAXES
-  INSURANCE
-  // DEPOSIT
-  SALARY
-  FREELANCE
-  RENTAL_INCOME
-  DIVIDENDS
-  REFUND
-  GIFT_RECEIVED
-  ASSET_SALE
-  // INVESTMENT
-  FIXED_INCOME
-  VARIABLE_INCOME
-  REAL_ESTATE_FUNDS
-  CRYPTO
-  PRIVATE_PENSION
-  SAVINGS
+// ============================================================
+// DOMÍNIO FINANCEIRO (antes: Transaction + enums)
+// ============================================================
+model TipoOperacao {
+  id    String  @id @default(uuid())
+  tipo  String  @unique // Depósito | Despesa | Investimento
+  icone String? // URL do ícone no Vercel Blob
+  ativo Boolean @default(true)
+
+  operacoes  Operacao[]
+  categorias Categoria[]
 }
 
-enum TransactionPaymentMethod {
-  CREDIT_CARD
-  DEBIT_CARD
-  BANK_TRANSFER
-  BANK_SLIP
-  CASH
-  PIX
+model Categoria {
+  id             String  @id @default(uuid())
+  nome           String
+  tipoOperacaoId String
+  ativo          Boolean @default(true)
+
+  tipoOperacao TipoOperacao @relation(fields: [tipoOperacaoId], references: [id])
+  operacoes    Operacao[]
+
+  // Não permite duas categorias com o mesmo nome dentro do mesmo tipo de
+  // operação (ex: duas categorias "Outros" em Despesa). Nomes iguais em
+  // tipos diferentes continuam permitidos.
+  @@unique([tipoOperacaoId, nome])
+}
+
+model MetodoPagamento {
+  id    String  @id @default(uuid())
+  nome  String  @unique // não permite dois métodos de pagamento com o mesmo nome
+  icone String? // URL do ícone no Vercel Blob
+  ativo Boolean @default(true)
+
+  operacoes Operacao[]
+}
+
+model Operacao {
+  id                String   @id @default(uuid())
+  titulo            String
+  valor             Decimal  @db.Decimal(10, 2)
+  data              DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  usuarioId         String // continua sendo o userId do Clerk (isolamento por usuário)
+  tipoOperacaoId    String
+  categoriaId       String
+  metodoPagamentoId String
+
+  tipoOperacao    TipoOperacao    @relation(fields: [tipoOperacaoId], references: [id])
+  categoria       Categoria       @relation(fields: [categoriaId], references: [id])
+  metodoPagamento MetodoPagamento @relation(fields: [metodoPagamentoId], references: [id])
+}
+
+// ============================================================
+// DOMÍNIO EDUCACIONAL
+// ============================================================
+model TemaCurso {
+  id        String @id @default(uuid())
+  titulo    String @unique // não permite dois temas com o mesmo título
+  descricao String
+  ordem     Int
+
+  cursos Curso[]
+}
+
+enum NivelEnsino {
+  INICIANTE
+  INTERMEDIARIO
+  AVANCADO
+}
+
+// imagem guarda a URL do arquivo no Vercel Blob (upload real).
+// O XP concedido por curso não é mais um campo individual: vem
+// da configuração global em ConstantesXP (ver abaixo).
+model Curso {
+  id           String      @id @default(uuid())
+  titulo       String
+  descricao    String
+  imagem       String?
+  duracao      Int // minutos
+  nivelEnsino  NivelEnsino
+  cor          String
+  desbloqueado Boolean     @default(false)
+  ordem        Int
+  temaCursoId  String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  temaCurso TemaCurso @relation(fields: [temaCursoId], references: [id])
+
+  modulos           Modulo[]
+  licoes            Licao[]
+  questionario      Questionario?
+  licoesPorCurso    LicoesPorCurso?
+  calculosProgresso CalculoDeProgresso[]
+  usuariosNoCurso   Usuario[]            @relation("UsuarioCursoAtual")
+}
+
+model Modulo {
+  id           String  @id @default(uuid())
+  titulo       String
+  ordem        Int
+  desbloqueado Boolean @default(false)
+  cursoId      String
+
+  curso Curso @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+
+  licoes          Licao[]
+  licoesPorModulo LicoesPorModulo?
+}
+
+// imagem guarda a URL do arquivo no Vercel Blob (upload real).
+// O XP concedido por lição vem da configuração global em ConstantesXP.
+model Licao {
+  id           String  @id @default(uuid())
+  titulo       String
+  conteudo     String  @db.Text
+  imagem       String?
+  resumo       String
+  duracao      Int // minutos
+  ordem        Int
+  desbloqueado Boolean @default(false)
+  cursoId      String
+  moduloId     String
+
+  curso  Curso  @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  modulo Modulo @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+
+  progresso       ProgressoUsuarioLicao[]
+  anotacoes       AnotacaoLicao[]
+  usuariosNaLicao Usuario[]               @relation("UsuarioLicaoAtual")
+}
+
+// imagem guarda a URL do arquivo no Vercel Blob (upload real).
+// O XP concedido pelo questionário vem da configuração global em ConstantesXP.
+model Questionario {
+  id          String  @id @default(uuid())
+  descricao   String
+  imagem      String?
+  qtdQuestoes Int     @default(5)
+  cursoId     String  @unique // 1 questionário por curso
+
+  curso     Curso                          @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  questoes  Questao[]
+  progresso ProgressoUsuarioQuestionario[]
+}
+
+model Questao {
+  id             String  @id @default(uuid())
+  enunciado      String
+  ativa          Boolean @default(true)
+  ordem          Int
+  questionarioId String
+
+  questionario Questionario  @relation(fields: [questionarioId], references: [id], onDelete: Cascade)
+  alternativas Alternativa[]
+}
+
+model Alternativa {
+  id         String  @id @default(uuid())
+  texto      String
+  correta    Boolean @default(false)
+  ordem      Int
+  explicacao String?
+  questaoId  String
+
+  questao Questao @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+}
+
+// imgConquistaBloq/imgConquistaDesb guardam a URL do arquivo no Vercel Blob.
+model Conquista {
+  id               String  @id @default(uuid())
+  titulo           String
+  preRequisito     String?
+  imgConquistaBloq String?
+  imgConquistaDesb String?
+  qtdXpMinimo      Int
+
+  progresso ProgressoUsuarioConquista[]
+}
+
+model AnotacaoLicao {
+  id           String   @id @default(uuid())
+  blocoDeNotas String   @db.Text
+  usuarioId    String
+  licaoId      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  licao   Licao   @relation(fields: [licaoId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, licaoId])
+}
+
+// ============================================================
+// CONFIGURAÇÃO GLOBAL DE XP
+// ============================================================
+// Linha única (singleton) com os valores padrão de XP concedidos
+// ao concluir um curso, uma lição ou um questionário. Substitui os
+// campos "xp" que antes existiam individualmente em Curso/Licao/
+// Questionario — agora o valor é um parâmetro global do sistema.
+model ConstantesXP {
+  id                String @id @default(uuid())
+  qtdXpCurso        Int    @default(0)
+  qtdXpLicao        Int    @default(0)
+  qtdXpQuestionario Int    @default(0)
+}
+
+// ============================================================
+// PROGRESSO DO USUÁRIO (todas atualizadas automaticamente,
+// na mesma transação da ação que as originou)
+// ============================================================
+model ProgressoUsuarioLicao {
+  id                  String    @id @default(uuid())
+  usuarioId           String
+  licaoId             String
+  licaoRealizada      Boolean   @default(false)
+  dataRealizacaoLicao DateTime?
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  licao   Licao   @relation(fields: [licaoId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, licaoId])
+}
+
+model ProgressoUsuarioQuestionario {
+  id                         String    @id @default(uuid())
+  usuarioId                  String
+  questionarioId             String
+  qtdAcertos                 Int       @default(0)
+  questionarioFeito          Boolean   @default(false)
+  dataRealizacaoQuestionario DateTime?
+
+  usuario      Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  questionario Questionario @relation(fields: [questionarioId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, questionarioId])
+}
+
+model ProgressoUsuarioConquista {
+  id                         String   @id @default(uuid())
+  usuarioId                  String
+  conquistaId                String
+  qtdConquistasDesbloqueadas Int      @default(0)
+  desbloqueadaEm             DateTime @default(now())
+
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  conquista Conquista @relation(fields: [conquistaId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, conquistaId])
+}
+
+// Tabelas "contadoras" — dado derivado mantido sempre em dia
+// para leitura rápida (recalculado junto com a ação que muda os dados-fonte).
+model CalculoDeProgresso {
+  id                  String   @id @default(uuid())
+  usuarioId           String
+  cursoId             String
+  licoesConcluidas    Int      @default(0)
+  percentualConcluido Int      @default(0) // 0-100
+  atualizadoEm        DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  curso   Curso   @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, cursoId])
+}
+
+model LicoesPorCurso {
+  id           String @id @default(uuid())
+  cursoId      String @unique
+  qtdLicoes    Int    @default(0)
+  duracaoTotal Int    @default(0) // minutos
+
+  curso Curso @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+}
+
+model LicoesPorModulo {
+  id        String @id @default(uuid())
+  moduloId  String @unique
+  qtdLicoes Int    @default(0)
+
+  modulo Modulo @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// ASSINATURA
+// ============================================================
+model Plano {
+  id            String  @id @default(uuid())
+  titulo        String
+  descricao     String?
+  valorMensal   Decimal @db.Decimal(10, 2)
+  stripePriceId String?
+  ordem         Int     @default(1)
+  ativo         Boolean @default(true)
+
+  beneficios BeneficioPlano[]
+}
+
+model BeneficioPlano {
+  id              String @id @default(uuid())
+  beneficio       String
+  limiteOperacoes Int?
+  planoId         String
+
+  plano Plano @relation(fields: [planoId], references: [id], onDelete: Cascade)
 }

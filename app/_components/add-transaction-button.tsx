@@ -10,13 +10,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { OpcoesOperacao } from "../_data/get-opcoes-operacao";
 
 interface AddTransactionButtonProps {
   userCanAddTransaction?: boolean;
+  opcoes: OpcoesOperacao;
 }
 
 const AddTransactionButton = ({
   userCanAddTransaction,
+  opcoes,
 }: AddTransactionButtonProps) => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
@@ -31,15 +34,15 @@ const AddTransactionButton = ({
                 onClick={() => setDialogIsOpen(true)}
                 disabled={!userCanAddTransaction}
               >
-                Adicionar transação
+                Adicionar operação
                 <ArrowDownUpIcon />
               </Button>
             </div>
           </TooltipTrigger>
           {!userCanAddTransaction && (
             <TooltipContent>
-              Você atingiu o limite de transações. Atualize seu plano para criar
-              transações ilimitadas.
+              Você atingiu o limite de operações. Atualize seu plano para criar
+              operações ilimitadas.
             </TooltipContent>
           )}
         </Tooltip>
@@ -47,6 +50,7 @@ const AddTransactionButton = ({
       <UpsertTransactionDialog
         isOpen={dialogIsOpen}
         setIsOpen={setDialogIsOpen}
+        opcoes={opcoes}
       />
     </>
   );

@@ -10,6 +10,7 @@ import ExpensesPerCategory from "./_components/expenses-per-category";
 import LastTransactions from "./_components/last-transactions";
 import { canUserAddTransaction } from "../_data/can-user-add-transaction";
 import AiReportButton from "./_components/ai-report-button";
+import { getOpcoesOperacao } from "../_data/get-opcoes-operacao";
 
 interface HomeProps {
   searchParams: {
@@ -26,9 +27,13 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
   if (monthIsInvalid) {
     redirect(`?month=${new Date().getMonth() + 1}`);
   }
-  const dashboard = await getDashboard(month);
-  const userCanAddTransaction = await canUserAddTransaction();
-  const user = await clerkClient().users.getUser(userId);
+  const [dashboard, userCanAddTransaction, opcoes, user] = await Promise.all([
+    getDashboard(month),
+    canUserAddTransaction(),
+    getOpcoesOperacao(),
+    clerkClient().users.getUser(userId),
+  ]);
+
   return (
     <>
       <Navbar />
@@ -49,17 +54,26 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
           <div className="flex flex-col gap-6 overflow-hidden">
             <SummaryCards
               month={month}
-              {...dashboard}
+              balance={dashboard.balance}
+              investimentosTotal={dashboard.investimentosTotal}
+              depositosTotal={dashboard.depositosTotal}
+              despesasTotal={dashboard.despesasTotal}
               userCanAddTransaction={userCanAddTransaction}
+              opcoes={opcoes}
             />
             <div className="grid h-full grid-cols-3 grid-rows-1 gap-6 overflow-hidden">
-              <TransactionsPieChart {...dashboard} />
+              <TransactionsPieChart
+                percentualPorTipo={dashboard.percentualPorTipo}
+                depositosTotal={dashboard.depositosTotal}
+                investimentosTotal={dashboard.investimentosTotal}
+                despesasTotal={dashboard.despesasTotal}
+              />
               <ExpensesPerCategory
-                expensesPerCategory={dashboard.totalExpensePerCategory}
+                totalPorCategoria={dashboard.totalPorCategoria}
               />
             </div>
           </div>
-          <LastTransactions lastTransactions={dashboard.lastTransactions} />
+          <LastTransactions ultimasOperacoes={dashboard.ultimasOperacoes} />
         </div>
       </div>
     </>

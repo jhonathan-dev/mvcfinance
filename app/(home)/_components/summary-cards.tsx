@@ -5,23 +5,26 @@ import {
   WalletIcon,
 } from "lucide-react";
 import SummaryCard from "./summary-card";
+import { OpcoesOperacao } from "@/app/_data/get-opcoes-operacao";
 
-interface SummaryCards {
+interface SummaryCardsProps {
   month: string;
   balance: number;
-  investmentsTotal: number;
-  depositsTotal: number;
-  expensesTotal: number;
+  investimentosTotal: number;
+  depositosTotal: number;
+  despesasTotal: number;
   userCanAddTransaction?: boolean;
+  opcoes: OpcoesOperacao;
 }
 
-const SummaryCards = async ({
+const SummaryCards = ({
   balance,
-  investmentsTotal,
-  depositsTotal,
-  expensesTotal,
+  investimentosTotal,
+  depositosTotal,
+  despesasTotal,
   userCanAddTransaction,
-}: SummaryCards) => {
+  opcoes,
+}: SummaryCardsProps) => {
   return (
     <div className="space-y-6">
       {/* PRIMEIRO CARD */}
@@ -32,6 +35,7 @@ const SummaryCards = async ({
         amount={balance}
         size="large"
         userCanAddTransaction={userCanAddTransaction}
+        opcoes={opcoes}
       />
 
       {/* OUTROS CARDS */}
@@ -40,17 +44,17 @@ const SummaryCards = async ({
         <SummaryCard
           icon={<PiggyBankIcon size={16} />}
           title="Investido"
-          amount={investmentsTotal}
+          amount={investimentosTotal}
         />
         <SummaryCard
           icon={<TrendingUpIcon size={16} className="text-green-500" />}
           title="Receita"
-          amount={depositsTotal}
+          amount={depositosTotal}
         />
         <SummaryCard
           icon={<TrendingDownIcon size={16} className="text-red-500" />}
           title="Despesas"
-          amount={expensesTotal}
+          amount={despesasTotal}
         />
       </div>
     </div>

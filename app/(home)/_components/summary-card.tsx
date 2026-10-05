@@ -1,5 +1,6 @@
 import AddTransactionButton from "@/app/_components/add-transaction-button";
 import { Card, CardContent, CardHeader } from "@/app/_components/ui/card";
+import { OpcoesOperacao } from "@/app/_data/get-opcoes-operacao";
 import { ReactNode } from "react";
 
 interface SummaryCardProps {
@@ -8,6 +9,7 @@ interface SummaryCardProps {
   amount: number;
   size?: "small" | "large";
   userCanAddTransaction?: boolean;
+  opcoes?: OpcoesOperacao;
 }
 
 const SummaryCard = ({
@@ -16,6 +18,7 @@ const SummaryCard = ({
   amount,
   size = "small",
   userCanAddTransaction,
+  opcoes,
 }: SummaryCardProps) => {
   return (
     <Card>
@@ -37,8 +40,11 @@ const SummaryCard = ({
           }).format(amount)}
         </p>
 
-        {size === "large" && (
-          <AddTransactionButton userCanAddTransaction={userCanAddTransaction} />
+        {size === "large" && opcoes && (
+          <AddTransactionButton
+            userCanAddTransaction={userCanAddTransaction}
+            opcoes={opcoes}
+          />
         )}
       </CardContent>
     </Card>

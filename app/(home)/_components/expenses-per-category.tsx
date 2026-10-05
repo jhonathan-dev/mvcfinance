@@ -1,15 +1,14 @@
 import { CardContent, CardHeader, CardTitle } from "@/app/_components/ui/card";
 import { Progress } from "@/app/_components/ui/progress";
 import { ScrollArea } from "@/app/_components/ui/scroll-area";
-import { TRANSACTION_CATEGORY_LABELS } from "@/app/_constants/transactions";
-import { TotalExpensePerCategory } from "@/app/_data/get-dashboard/types";
+import { TotalPorCategoria } from "@/app/_data/get-dashboard/types";
 
 interface ExpensesPerCategoryProps {
-  expensesPerCategory: TotalExpensePerCategory[];
+  totalPorCategoria: TotalPorCategoria[];
 }
 
 const ExpensesPerCategory = ({
-  expensesPerCategory,
+  totalPorCategoria,
 }: ExpensesPerCategoryProps) => {
   return (
     <ScrollArea className="col-span-2 h-full rounded-md border pb-6">
@@ -18,15 +17,15 @@ const ExpensesPerCategory = ({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {expensesPerCategory.map((category) => (
-          <div key={category.category} className="space-y-2">
+        {totalPorCategoria.map((categoria) => (
+          <div key={categoria.categoriaId} className="space-y-2">
             <div className="flex w-full justify-between">
+              <p className="text-sm font-bold">{categoria.categoriaNome}</p>
               <p className="text-sm font-bold">
-                {TRANSACTION_CATEGORY_LABELS[category.category]}
+                {categoria.percentualDoTotal}%
               </p>
-              <p className="text-sm font-bold">{category.percentageOfTotal}%</p>
             </div>
-            <Progress value={category.percentageOfTotal} />
+            <Progress value={categoria.percentualDoTotal} />
           </div>
         ))}
       </CardContent>
