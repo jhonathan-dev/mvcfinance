@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FolderTree,
   Tags,
   CreditCard,
+  BookOpen,
   ArrowLeft,
 } from "lucide-react";
 
 const items = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/admin/cursos", label: "Cursos", icon: BookOpen },
   { href: "/admin/temas", label: "Temas de Curso", icon: FolderTree },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },
   {
@@ -27,10 +28,7 @@ const AdminSidebar = () => {
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r md:flex">
-      <div className="flex items-center gap-3 border-b px-6 py-5">
-        <Image src="/logo_mvc.png" alt="MVC Finance" width={140} height={32} />
-      </div>
-      <div className="px-6 pb-2 pt-4 text-xs font-semibold uppercase text-muted-foreground">
+      <div className="px-6 pb-2 pt-5 text-xs font-semibold uppercase text-muted-foreground">
         Painel Admin
       </div>
       <nav className="flex-1 space-y-1 p-3">

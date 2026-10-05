@@ -6,17 +6,25 @@ import {
   CardHeader,
   CardTitle,
 } from "../_components/ui/card";
-import { FolderTree, Tags, CreditCard } from "lucide-react";
+import { FolderTree, Tags, CreditCard, BookOpen } from "lucide-react";
 import PageHeader from "./_components/PageHeader";
 
 const AdminDashboard = async () => {
-  const [temas, categoriasAtivas, metodosAtivos] = await Promise.all([
+  const [cursos, temas, categoriasAtivas, metodosAtivos] = await Promise.all([
+    db.curso.count(),
     db.temaCurso.count(),
     db.categoria.count({ where: { ativo: true } }),
     db.metodoPagamento.count({ where: { ativo: true } }),
   ]);
 
   const stats = [
+    {
+      label: "Cursos",
+      value: cursos,
+      icon: BookOpen,
+      href: "/admin/cursos",
+      color: "text-blue-600",
+    },
     {
       label: "Temas de Curso",
       value: temas,
@@ -47,7 +55,7 @@ const AdminDashboard = async () => {
         description="Visão geral do painel administrativo"
         crumbs={[{ label: "Admin" }]}
       />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => {
           const Icon = s.icon;
           return (
@@ -68,8 +76,8 @@ const AdminDashboard = async () => {
         })}
       </div>
       <p className="mt-8 text-sm text-muted-foreground">
-        Cursos, Módulos, Lições, Questionário e Planos entram no painel em uma
-        próxima etapa.
+        Módulos e Lições já são gerenciados dentro de cada curso. Questionário,
+        Conquistas e Planos entram no painel em uma próxima etapa.
       </p>
     </div>
   );
