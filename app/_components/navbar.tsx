@@ -33,6 +33,26 @@ const Navbar = () => {
           Transações
         </Link>
         <Link
+          href="/cursos"
+          className={
+            pathname.startsWith("/cursos")
+              ? "font-bold text-primary"
+              : "text-muted-foreground"
+          }
+        >
+          Cursos
+        </Link>
+        <Link
+          href="/conquistas"
+          className={
+            pathname.startsWith("/conquistas")
+              ? "font-bold text-primary"
+              : "text-muted-foreground"
+          }
+        >
+          Conquistas
+        </Link>
+        <Link
           href="/subscription"
           className={
             pathname === "/subscription"
