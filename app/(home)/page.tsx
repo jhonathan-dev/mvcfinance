@@ -37,7 +37,9 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
   return (
     <>
       <Navbar />
-      <div className="flex h-full flex-col space-y-6 overflow-hidden p-6">
+      {/* A página rola quando o conteúdo não cabe na tela (ex.: notebook): antes tudo era
+          overflow-hidden e o que passava da altura ficava cortado, sem rolagem. */}
+      <div className="flex h-full flex-col space-y-6 overflow-y-auto p-6">
         <div className="flex justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-3">
@@ -50,8 +52,8 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
             <TimeSelect />
           </div>
         </div>
-        <div className="grid h-full grid-cols-[2fr,1fr] gap-6 overflow-hidden">
-          <div className="flex flex-col gap-6 overflow-hidden">
+        <div className="grid flex-1 grid-cols-[2fr,1fr] gap-6">
+          <div className="flex flex-col gap-6">
             <SummaryCards
               month={month}
               balance={dashboard.balance}
@@ -61,7 +63,7 @@ const Home = async ({ searchParams: { month } }: HomeProps) => {
               userCanAddTransaction={userCanAddTransaction}
               opcoes={opcoes}
             />
-            <div className="grid h-full grid-cols-3 grid-rows-1 gap-6 overflow-hidden">
+            <div className="grid flex-1 grid-cols-3 gap-6">
               <TransactionsPieChart
                 percentualPorTipo={dashboard.percentualPorTipo}
                 depositosTotal={dashboard.depositosTotal}
