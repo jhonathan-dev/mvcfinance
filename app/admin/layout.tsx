@@ -1,17 +1,14 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 import AdminSidebar from "./_components/AdminSidebar";
 import Navbar from "@/app/_components/navbar";
 import { Toaster } from "@/app/_components/ui/sonner";
 
-// TODO: hoje qualquer usuário logado acessa o /admin. Quando o time
-// definir quem são os administradores, adicionar checagem de permissão
-// aqui (ex: publicMetadata.role === "admin") antes do redirect abaixo.
+// Só administradores (Clerk publicMetadata.role === "admin") acessam o /admin.
+// Atenção: esta checagem sozinha NÃO basta — o Next renderiza páginas de forma
+// parcial e o layout nem sempre roda de novo. Por isso cada page.tsx do admin
+// e cada Server Action também chamam exigirAdminNaPagina/exigirAdmin.
 const AdminLayout = async ({ children }: { children: React.ReactNode }) => {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/login");
-  }
+  await exigirAdminNaPagina();
 
   return (
     <div className="flex h-full flex-col overflow-hidden">

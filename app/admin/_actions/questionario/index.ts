@@ -4,13 +4,17 @@ import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UpsertQuestionarioSchema, upsertQuestionarioSchema } from "./schema";
 import { deleteImage } from "@/app/_actions/upload-image";
-import { ErroDeNegocio, executar, type Resultado } from "../_shared/resultado";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 import { comGuardaDePublicacao } from "../_shared/publicacao";
 
 export const upsertQuestionario = async (
   params: UpsertQuestionarioSchema,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const { id, cursoId, ...data } = upsertQuestionarioSchema.parse(params);
 
     const curso = await db.curso.findUnique({ where: { id: cursoId } });

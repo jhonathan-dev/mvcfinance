@@ -24,11 +24,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/_components/ui/dialog";
-import { Plus, Pencil, Power, CreditCard } from "lucide-react";
+import { Plus, Pencil, Power, Trash2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import ConfirmDelete from "../../_components/ConfirmDelete";
 import {
   upsertMetodoPagamento,
   toggleMetodoPagamento,
+  deleteMetodoPagamento,
 } from "../../_actions/metodos-pagamento";
 
 type FormState = { nome: string; icone: string; ativo: boolean };
@@ -81,6 +83,17 @@ const MetodosManager = ({ metodos }: { metodos: MetodoPagamento[] }) => {
     } catch (error) {
       console.error(error);
       toast.error("Erro ao atualizar status");
+    }
+  };
+
+  const remove = async (m: MetodoPagamento) => {
+    try {
+      const resultado = await deleteMetodoPagamento(m.id);
+      if (!resultado.ok) return toast.error(resultado.erro);
+      toast.success("Método excluído");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir método");
     }
   };
 
@@ -147,6 +160,18 @@ const MetodosManager = ({ metodos }: { metodos: MetodoPagamento[] }) => {
                   <Button variant="ghost" size="icon" onClick={() => toggle(m)}>
                     <Power className="h-4 w-4" />
                   </Button>
+                  <ConfirmDelete
+                    description={`Excluir o método "${m.nome}"? Se ele já foi usado em transações, a exclusão é recusada e o melhor caminho é inativá-lo.`}
+                    onConfirm={() => remove(m)}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </ConfirmDelete>
                 </TableCell>
               </TableRow>
             ))}

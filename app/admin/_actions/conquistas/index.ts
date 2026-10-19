@@ -4,13 +4,17 @@ import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UpsertConquistaSchema, upsertConquistaSchema } from "./schema";
 import { deleteImage } from "@/app/_actions/upload-image";
-import { ErroDeNegocio, executar, type Resultado } from "../_shared/resultado";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 import { chave } from "../_shared/validacao";
 
 export const upsertConquista = async (
   params: UpsertConquistaSchema,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const { id, ...data } = upsertConquistaSchema.parse(params);
 
     const conquistas = await db.conquista.findMany({
@@ -60,7 +64,7 @@ export const upsertConquista = async (
   });
 
 export const deleteConquista = async (id: string): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const conquista = await db.conquista.findUniqueOrThrow({ where: { id } });
 
     await db.conquista.delete({ where: { id } });

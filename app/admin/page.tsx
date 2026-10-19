@@ -16,8 +16,10 @@ import {
   Shapes,
 } from "lucide-react";
 import PageHeader from "./_components/PageHeader";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 const AdminDashboard = async () => {
+  await exigirAdminNaPagina();
   const [
     cursos,
     temas,

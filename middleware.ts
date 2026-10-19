@@ -1,6 +1,14 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-export default clerkMiddleware();
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+
+export default clerkMiddleware((auth, req) => {
+  // Quem não está logado nem chega ao código do /admin. O papel de admin é
+  // conferido nas páginas e nas Server Actions (app/_lib/admin.ts).
+  if (isAdminRoute(req)) {
+    auth().protect();
+  }
+});
 
 export const config = {
   matcher: [

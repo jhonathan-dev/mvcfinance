@@ -24,11 +24,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/_components/ui/dialog";
-import { Plus, Pencil, Power, Shapes } from "lucide-react";
+import { Plus, Pencil, Power, Trash2, Shapes } from "lucide-react";
 import { toast } from "sonner";
+import ConfirmDelete from "../../_components/ConfirmDelete";
 import {
   upsertTipoOperacao,
   toggleTipoOperacao,
+  deleteTipoOperacao,
 } from "../../_actions/tipos-operacao";
 import ImageUpload from "../../_components/ImageUpload";
 
@@ -79,6 +81,17 @@ const TiposOperacaoManager = ({ tipos }: { tipos: TipoOperacao[] }) => {
     } catch (error) {
       console.error(error);
       toast.error("Erro ao atualizar status");
+    }
+  };
+
+  const remove = async (t: TipoOperacao) => {
+    try {
+      const resultado = await deleteTipoOperacao(t.id);
+      if (!resultado.ok) return toast.error(resultado.erro);
+      toast.success("Tipo excluído");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir tipo");
     }
   };
 
@@ -145,6 +158,18 @@ const TiposOperacaoManager = ({ tipos }: { tipos: TipoOperacao[] }) => {
                   <Button variant="ghost" size="icon" onClick={() => toggle(t)}>
                     <Power className="h-4 w-4" />
                   </Button>
+                  <ConfirmDelete
+                    description={`Excluir o tipo "${t.tipo}"? Se ele já foi usado em transações ou tem categorias, a exclusão é recusada e o melhor caminho é inativá-lo.`}
+                    onConfirm={() => remove(t)}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </ConfirmDelete>
                 </TableCell>
               </TableRow>
             ))}

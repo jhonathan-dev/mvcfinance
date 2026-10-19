@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
+import { ErroDeAcesso, exigirAdmin } from "@/app/_lib/admin";
 
 // Por que as actions do admin devolvem um "resultado" em vez de lançar erro:
 // em produção o Next.js troca a mensagem de qualquer erro lançado numa Server
@@ -20,7 +21,7 @@ export const executar = async (
     await operacao();
     return { ok: true };
   } catch (error) {
-    if (error instanceof ErroDeNegocio) {
+    if (error instanceof ErroDeNegocio || error instanceof ErroDeAcesso) {
       return { ok: false, erro: error.message };
     }
     if (error instanceof ZodError) {
@@ -55,3 +56,13 @@ export const executar = async (
     return { ok: false, erro: "Erro inesperado. Tente novamente." };
   }
 };
+
+// Igual ao `executar`, mas antes de tudo confere que quem chama é admin.
+// Toda action de escrita do admin usa esta versão.
+export const executarAdmin = async (
+  operacao: () => Promise<void>,
+): Promise<Resultado> =>
+  executar(async () => {
+    await exigirAdmin();
+    await operacao();
+  });

@@ -1,8 +1,10 @@
 import PageHeader from "../_components/PageHeader";
 import { getConstantesXP } from "../_actions/constantes-xp";
 import ConfiguracaoXPForm from "./_components/ConfiguracaoXPForm";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 const ConfiguracaoXPPage = async () => {
+  await exigirAdminNaPagina();
   const constantes = await getConstantesXP();
 
   return (

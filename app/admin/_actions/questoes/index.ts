@@ -3,14 +3,18 @@
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UpsertQuestaoSchema, upsertQuestaoSchema } from "./schema";
-import { ErroDeNegocio, executar, type Resultado } from "../_shared/resultado";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 import { chave } from "../_shared/validacao";
 import { comGuardaDePublicacao } from "../_shared/publicacao";
 
 export const upsertQuestao = async (
   params: UpsertQuestaoSchema,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const { id, alternativas, ...data } = upsertQuestaoSchema.parse(params);
 
     const questionario = await db.questionario.findUnique({
@@ -109,7 +113,7 @@ export const deleteQuestao = async (
   id: string,
   cursoId: string,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     await carregarQuestaoDoCurso(id, cursoId);
 
     // Cascade no schema apaga as alternativas junto.
@@ -124,7 +128,7 @@ export const toggleQuestaoAtiva = async (
   id: string,
   cursoId: string,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const questao = await carregarQuestaoDoCurso(id, cursoId);
 
     await comGuardaDePublicacao(cursoId, (tx) =>

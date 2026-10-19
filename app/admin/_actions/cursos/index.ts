@@ -4,14 +4,18 @@ import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UpsertCursoSchema, upsertCursoSchema } from "./schema";
 import { deleteImage } from "@/app/_actions/upload-image";
-import { ErroDeNegocio, executar, type Resultado } from "../_shared/resultado";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 import { chave } from "../_shared/validacao";
 import { exigirCursoPublicavel } from "../_shared/publicacao";
 
 export const upsertCurso = async (
   params: UpsertCursoSchema,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const { id, ...data } = upsertCursoSchema.parse(params);
 
     const tema = await db.temaCurso.findUnique({
@@ -84,7 +88,7 @@ export const upsertCurso = async (
   });
 
 export const deleteCurso = async (id: string): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const curso = await db.curso.findUniqueOrThrow({ where: { id } });
 
     // Excluir apagaria (em cascata) o histórico de estudo de quem já começou.
@@ -113,7 +117,7 @@ export const deleteCurso = async (id: string): Promise<Resultado> =>
   });
 
 export const toggleCursoDesbloqueado = async (id: string): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const curso = await db.curso.findUniqueOrThrow({ where: { id } });
 
     if (!curso.desbloqueado) {

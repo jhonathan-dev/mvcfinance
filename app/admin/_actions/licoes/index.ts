@@ -8,7 +8,11 @@ import {
   recalcularLicoesPorModulo,
   recalcularLicoesPorCurso,
 } from "../_shared/contadores";
-import { ErroDeNegocio, executar, type Resultado } from "../_shared/resultado";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 import { chave } from "../_shared/validacao";
 import { comGuardaDePublicacao } from "../_shared/publicacao";
 
@@ -21,7 +25,7 @@ const revalidarTudo = (cursoId: string, moduloId: string) => {
 export const upsertLicao = async (
   params: UpsertLicaoSchema,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const { id, ...data } = upsertLicaoSchema.parse(params);
 
     // O módulo precisa existir e pertencer ao curso informado.
@@ -91,7 +95,7 @@ export const upsertLicao = async (
   });
 
 export const deleteLicao = async (id: string): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const licao = await db.licao.findUniqueOrThrow({ where: { id } });
 
     // Apagar uma lição que alunos já concluíram bagunçaria o % de progresso
@@ -120,7 +124,7 @@ export const deleteLicao = async (id: string): Promise<Resultado> =>
   });
 
 export const toggleLicaoDesbloqueada = async (id: string): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const licao = await db.licao.findUniqueOrThrow({ where: { id } });
     await db.licao.update({
       where: { id },

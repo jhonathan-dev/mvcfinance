@@ -1,6 +1,7 @@
 "use server";
 
 import { put, del } from "@vercel/blob";
+import { exigirAdmin } from "@/app/_lib/admin";
 
 // Server Action reutilizável para upload de imagens no Vercel Blob.
 // Usado por qualquer tela de admin que precise enviar um arquivo real
@@ -23,6 +24,9 @@ const TIPOS_PERMITIDOS = [
 ];
 
 export const uploadImage = async (formData: FormData, pasta: string) => {
+  // Só administradores enviam arquivos (evita uso do storage por qualquer logado).
+  await exigirAdmin();
+
   const file = formData.get("file") as File | null;
 
   if (!file) {
@@ -51,6 +55,10 @@ export const uploadImage = async (formData: FormData, pasta: string) => {
 // Falha em silêncio se a URL não existir mais — não deve travar o CRUD.
 export const deleteImage = async (url?: string | null) => {
   if (!url) return;
+
+  // Esta função também é uma Server Action chamável de fora: sem a checagem,
+  // qualquer logado poderia apagar qualquer imagem do Blob.
+  await exigirAdmin();
 
   try {
     await del(url);

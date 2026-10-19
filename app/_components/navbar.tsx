@@ -1,12 +1,16 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const Navbar = () => {
   const pathname = usePathname();
+  const { user } = useUser();
+  // Só esconde/mostra o link. Quem realmente barra o acesso é o servidor
+  // (app/_lib/admin.ts) — este valor é só para a tela ficar limpa.
+  const admin = user?.publicMetadata?.role === "admin";
   return (
     <nav className="flex justify-between border-b border-solid px-8 py-4">
       {/* ESQUERDA */}
@@ -57,16 +61,18 @@ const Navbar = () => {
       </div>
       {/* DIREITA */}
       <div className="flex items-center gap-4">
-        <Link
-          href="/admin"
-          className={
-            pathname.startsWith("/admin")
-              ? "font-bold text-primary"
-              : "text-sm text-muted-foreground hover:text-foreground"
-          }
-        >
-          Admin
-        </Link>
+        {admin && (
+          <Link
+            href="/admin"
+            className={
+              pathname.startsWith("/admin")
+                ? "font-bold text-primary"
+                : "text-sm text-muted-foreground hover:text-foreground"
+            }
+          >
+            Admin
+          </Link>
+        )}
         <UserButton showName />
       </div>
     </nav>

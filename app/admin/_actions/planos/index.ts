@@ -2,9 +2,11 @@
 
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
+import { exigirAdmin } from "@/app/_lib/admin";
 import { UpsertPlanoSchema, upsertPlanoSchema } from "./schema";
 
 export const upsertPlano = async (params: UpsertPlanoSchema) => {
+  await exigirAdmin();
   const { id, beneficios, ...data } = upsertPlanoSchema.parse(params);
 
   await db.$transaction(async (tx) => {
@@ -50,6 +52,7 @@ export const upsertPlano = async (params: UpsertPlanoSchema) => {
 };
 
 export const deletePlano = async (id: string) => {
+  await exigirAdmin();
   // Cascade no schema cuida de apagar os benefícios vinculados.
   await db.plano.delete({ where: { id } });
   revalidatePath("/admin/planos");
@@ -57,6 +60,7 @@ export const deletePlano = async (id: string) => {
 };
 
 export const togglePlanoAtivo = async (id: string) => {
+  await exigirAdmin();
   const plano = await db.plano.findUniqueOrThrow({ where: { id } });
   await db.plano.update({ where: { id }, data: { ativo: !plano.ativo } });
   revalidatePath("/admin/planos");

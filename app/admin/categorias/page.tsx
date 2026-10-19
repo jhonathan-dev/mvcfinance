@@ -1,8 +1,10 @@
 import { db } from "@/app/_lib/prisma";
 import PageHeader from "../_components/PageHeader";
 import CategoriasManager from "./_components/CategoriasManager";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 const CategoriasPage = async () => {
+  await exigirAdminNaPagina();
   const [categorias, tipos] = await Promise.all([
     db.categoria.findMany({
       include: { tipoOperacao: true },

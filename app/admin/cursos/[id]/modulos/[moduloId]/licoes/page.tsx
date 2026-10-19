@@ -2,12 +2,14 @@ import { notFound } from "next/navigation";
 import { db } from "@/app/_lib/prisma";
 import PageHeader from "@/app/admin/_components/PageHeader";
 import LicoesManager from "./_components/LicoesManager";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 interface LicoesPageProps {
   params: { id: string; moduloId: string };
 }
 
 const LicoesPage = async ({ params }: LicoesPageProps) => {
+  await exigirAdminNaPagina();
   const [curso, modulo] = await Promise.all([
     db.curso.findUnique({ where: { id: params.id } }),
     db.modulo.findUnique({ where: { id: params.moduloId } }),

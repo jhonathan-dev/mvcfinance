@@ -2,8 +2,10 @@ import { db } from "@/app/_lib/prisma";
 import Link from "next/link";
 import PageHeader from "../_components/PageHeader";
 import CursosManager from "./_components/CursosManager";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 const CursosPage = async () => {
+  await exigirAdminNaPagina();
   const [cursos, temas] = await Promise.all([
     db.curso.findMany({
       include: {

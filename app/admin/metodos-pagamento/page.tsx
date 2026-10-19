@@ -1,8 +1,10 @@
 import { db } from "@/app/_lib/prisma";
 import PageHeader from "../_components/PageHeader";
 import MetodosManager from "./_components/MetodosManager";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 const MetodosPagamentoPage = async () => {
+  await exigirAdminNaPagina();
   const metodos = await db.metodoPagamento.findMany({
     orderBy: { nome: "asc" },
   });

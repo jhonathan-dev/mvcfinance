@@ -3,9 +3,16 @@
 import { db } from "@/app/_lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { exigirAdmin } from "@/app/_lib/admin";
 import { UpsertCategoriaSchema, upsertCategoriaSchema } from "./schema";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 
 export const upsertCategoria = async (params: UpsertCategoriaSchema) => {
+  await exigirAdmin();
   const data = upsertCategoriaSchema.parse(params);
   const { id, ...rest } = data;
 
@@ -51,6 +58,7 @@ export const upsertCategoria = async (params: UpsertCategoriaSchema) => {
 };
 
 export const toggleCategoria = async (id: string) => {
+  await exigirAdmin();
   const categoria = await db.categoria.findUniqueOrThrow({ where: { id } });
   await db.categoria.update({
     where: { id },
@@ -60,3 +68,25 @@ export const toggleCategoria = async (id: string) => {
   revalidatePath("/transactions");
   revalidatePath("/");
 };
+
+// Excluir só é permitido para categoria que nunca foi usada. Se já existem
+// transações (de qualquer usuário) apontando para ela, apagar quebraria o
+// histórico — nesse caso o caminho é inativar (botão de liga/desliga), que a
+// tira das telas de nova transação sem mexer nas antigas.
+export const deleteCategoria = async (id: string): Promise<Resultado> =>
+  executarAdmin(async () => {
+    const categoria = await db.categoria.findUniqueOrThrow({ where: { id } });
+
+    const emUso = await db.operacao.count({ where: { categoriaId: id } });
+    if (emUso > 0) {
+      throw new ErroDeNegocio(
+        `A categoria "${categoria.nome}" já foi usada em ${emUso} transação(ões) e não pode ser excluída. Inative-a para ela deixar de aparecer em novas transações.`,
+      );
+    }
+
+    await db.categoria.delete({ where: { id } });
+
+    revalidatePath("/admin/categorias");
+    revalidatePath("/transactions");
+    revalidatePath("/");
+  });

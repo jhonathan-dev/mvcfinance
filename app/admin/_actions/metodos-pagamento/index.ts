@@ -3,14 +3,22 @@
 import { db } from "@/app/_lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { exigirAdmin } from "@/app/_lib/admin";
 import {
   UpsertMetodoPagamentoSchema,
   upsertMetodoPagamentoSchema,
 } from "./schema";
+import { deleteImage } from "@/app/_actions/upload-image";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 
 export const upsertMetodoPagamento = async (
   params: UpsertMetodoPagamentoSchema,
 ) => {
+  await exigirAdmin();
   const data = upsertMetodoPagamentoSchema.parse(params);
   const { id, ...rest } = data;
 
@@ -46,6 +54,7 @@ export const upsertMetodoPagamento = async (
 };
 
 export const toggleMetodoPagamento = async (id: string) => {
+  await exigirAdmin();
   const metodo = await db.metodoPagamento.findUniqueOrThrow({ where: { id } });
   await db.metodoPagamento.update({
     where: { id },
@@ -55,3 +64,28 @@ export const toggleMetodoPagamento = async (id: string) => {
   revalidatePath("/transactions");
   revalidatePath("/");
 };
+
+// Só exclui método de pagamento que nunca foi usado em uma transação; senão,
+// o caminho é inativar (ele some das telas de nova transação).
+export const deleteMetodoPagamento = async (id: string): Promise<Resultado> =>
+  executarAdmin(async () => {
+    const metodo = await db.metodoPagamento.findUniqueOrThrow({
+      where: { id },
+    });
+
+    const emUso = await db.operacao.count({ where: { metodoPagamentoId: id } });
+    if (emUso > 0) {
+      throw new ErroDeNegocio(
+        `O método "${metodo.nome}" já foi usado em ${emUso} transação(ões) e não pode ser excluído. Inative-o para ele deixar de aparecer em novas transações.`,
+      );
+    }
+
+    await db.metodoPagamento.delete({ where: { id } });
+
+    // Só depois de excluir com sucesso: não deixa o ícone órfão no Blob.
+    await deleteImage(metodo.icone);
+
+    revalidatePath("/admin/metodos-pagamento");
+    revalidatePath("/transactions");
+    revalidatePath("/");
+  });

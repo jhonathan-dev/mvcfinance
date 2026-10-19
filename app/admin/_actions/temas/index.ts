@@ -3,13 +3,17 @@
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UpsertTemaSchema, upsertTemaSchema, deleteTemaSchema } from "./schema";
-import { ErroDeNegocio, executar, type Resultado } from "../_shared/resultado";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 import { chave } from "../_shared/validacao";
 
 export const upsertTema = async (
   params: UpsertTemaSchema,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const { id, ...dados } = upsertTemaSchema.parse(params);
 
     const temas = await db.temaCurso.findMany({
@@ -46,7 +50,7 @@ export const upsertTema = async (
   });
 
 export const deleteTema = async (params: { id: string }): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     deleteTemaSchema.parse(params);
 
     const qtdCursos = await db.curso.count({

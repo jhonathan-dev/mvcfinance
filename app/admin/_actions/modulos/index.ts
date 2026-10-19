@@ -4,14 +4,18 @@ import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UpsertModuloSchema, upsertModuloSchema } from "./schema";
 import { recalcularLicoesPorCurso } from "../_shared/contadores";
-import { ErroDeNegocio, executar, type Resultado } from "../_shared/resultado";
+import {
+  ErroDeNegocio,
+  executarAdmin,
+  type Resultado,
+} from "../_shared/resultado";
 import { chave } from "../_shared/validacao";
 import { comGuardaDePublicacao } from "../_shared/publicacao";
 
 export const upsertModulo = async (
   params: UpsertModuloSchema,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const { id, ...data } = upsertModuloSchema.parse(params);
 
     const curso = await db.curso.findUnique({ where: { id: data.cursoId } });
@@ -64,7 +68,7 @@ export const upsertModulo = async (
   });
 
 export const deleteModulo = async (id: string): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const modulo = await db.modulo.findUniqueOrThrow({ where: { id } });
 
     const progresso = await db.progressoUsuarioLicao.count({
@@ -91,7 +95,7 @@ export const deleteModulo = async (id: string): Promise<Resultado> =>
 export const toggleModuloDesbloqueado = async (
   id: string,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const modulo = await db.modulo.findUniqueOrThrow({ where: { id } });
     await db.modulo.update({
       where: { id },

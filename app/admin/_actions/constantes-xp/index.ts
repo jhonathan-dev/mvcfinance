@@ -2,13 +2,15 @@
 
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
+import { exigirAdmin } from "@/app/_lib/admin";
 import { UpdateConstantesXPSchema, updateConstantesXPSchema } from "./schema";
-import { executar, type Resultado } from "../_shared/resultado";
+import { executarAdmin, type Resultado } from "../_shared/resultado";
 
 // ConstantesXP é singleton: sempre existe exatamente uma linha (criada pelo
 // seed). Esta função garante isso mesmo que, por algum motivo, a linha não
 // exista ainda.
 export const getConstantesXP = async () => {
+  await exigirAdmin();
   const existente = await db.constantesXP.findFirst();
   if (existente) return existente;
 
@@ -20,7 +22,7 @@ export const getConstantesXP = async () => {
 export const updateConstantesXP = async (
   params: UpdateConstantesXPSchema,
 ): Promise<Resultado> =>
-  executar(async () => {
+  executarAdmin(async () => {
     const data = updateConstantesXPSchema.parse(params);
     const atual = await getConstantesXP();
 

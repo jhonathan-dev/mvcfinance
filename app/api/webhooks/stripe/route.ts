@@ -53,7 +53,10 @@ export const POST = async (request: Request) => {
           break;
         }
 
-        await clerkClient().users.updateUser(clerkUserId, {
+        // updateUserMetadata faz MERGE com o que já existe (ex.: role "admin").
+        // O updateUser antigo substituía o publicMetadata inteiro e apagaria
+        // o papel de admin de quem assina ou cancela o premium.
+        await clerkClient().users.updateUserMetadata(clerkUserId, {
           privateMetadata: {
             stripeCustomerId: session.customer,
             stripeSubscriptionId: subscription,
@@ -79,7 +82,7 @@ export const POST = async (request: Request) => {
       if (!clerkUserId) {
         return NextResponse.error();
       }
-      await clerkClient().users.updateUser(clerkUserId, {
+      await clerkClient().users.updateUserMetadata(clerkUserId, {
         privateMetadata: {
           stripeCustomerId: null,
           stripeSubscriptionId: null,

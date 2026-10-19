@@ -30,9 +30,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/_components/ui/dialog";
-import { Plus, Pencil, Power } from "lucide-react";
+import { Plus, Pencil, Power, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { upsertCategoria, toggleCategoria } from "../../_actions/categorias";
+import ConfirmDelete from "../../_components/ConfirmDelete";
+import {
+  upsertCategoria,
+  toggleCategoria,
+  deleteCategoria,
+} from "../../_actions/categorias";
 
 type CategoriaComTipo = Categoria & { tipoOperacao: TipoOperacao };
 type FormState = { nome: string; tipoOperacaoId: string; ativo: boolean };
@@ -92,6 +97,17 @@ const CategoriasManager = ({ categorias, tipos }: CategoriasManagerProps) => {
     }
   };
 
+  const remove = async (c: CategoriaComTipo) => {
+    try {
+      const resultado = await deleteCategoria(c.id);
+      if (!resultado.ok) return toast.error(resultado.erro);
+      toast.success("Categoria excluída");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir categoria");
+    }
+  };
+
   return (
     <div>
       <div className="mb-4 flex justify-end">
@@ -141,6 +157,18 @@ const CategoriasManager = ({ categorias, tipos }: CategoriasManagerProps) => {
                   <Button variant="ghost" size="icon" onClick={() => toggle(c)}>
                     <Power className="h-4 w-4" />
                   </Button>
+                  <ConfirmDelete
+                    description={`Excluir a categoria "${c.nome}"? Se ela já foi usada em transações, a exclusão é recusada e o melhor caminho é inativá-la.`}
+                    onConfirm={() => remove(c)}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </ConfirmDelete>
                 </TableCell>
               </TableRow>
             ))}

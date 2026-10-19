@@ -1,8 +1,10 @@
 import { db } from "@/app/_lib/prisma";
 import PageHeader from "../_components/PageHeader";
 import PlanosManager from "./_components/PlanosManager";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 const PlanosPage = async () => {
+  await exigirAdminNaPagina();
   const planos = await db.plano.findMany({
     include: { beneficios: true },
     orderBy: { ordem: "asc" },

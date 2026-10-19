@@ -2,12 +2,14 @@ import { notFound } from "next/navigation";
 import { db } from "@/app/_lib/prisma";
 import PageHeader from "@/app/admin/_components/PageHeader";
 import QuestionarioManager from "./_components/QuestionarioManager";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 interface QuestionarioPageProps {
   params: { id: string };
 }
 
 const QuestionarioPage = async ({ params }: QuestionarioPageProps) => {
+  await exigirAdminNaPagina();
   const curso = await db.curso.findUnique({ where: { id: params.id } });
   if (!curso) notFound();
 

@@ -1,8 +1,10 @@
 import { db } from "@/app/_lib/prisma";
 import PageHeader from "../_components/PageHeader";
 import ConquistasManager from "./_components/ConquistasManager";
+import { exigirAdminNaPagina } from "@/app/_lib/admin";
 
 const ConquistasPage = async () => {
+  await exigirAdminNaPagina();
   const conquistas = await db.conquista.findMany({
     orderBy: { qtdXpMinimo: "asc" },
   });
