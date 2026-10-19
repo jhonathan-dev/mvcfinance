@@ -3,8 +3,20 @@ import Image from "next/image";
 import { Card } from "@/app/_components/ui/card";
 import { Badge } from "@/app/_components/ui/badge";
 import { Progress } from "@/app/_components/ui/progress";
-import { Lock, Clock, BookOpen } from "lucide-react";
+import { Lock, Clock, BookOpen, Crown } from "lucide-react";
 import type { CursosComProgresso } from "@/app/_data/get-cursos-com-progresso";
+import type { AcessoCurso } from "@/app/_data/get-acesso-cursos";
+
+const textoBloqueio = (acesso: AcessoCurso) => {
+  switch (acesso.motivo) {
+    case "premium":
+      return "Exclusivo do plano Premium";
+    case "anterior":
+      return `Conclua "${acesso.cursoAnteriorTitulo}" para liberar`;
+    default:
+      return "Em breve";
+  }
+};
 
 const NIVEL_LABELS: Record<string, string> = {
   INICIANTE: "Iniciante",
@@ -46,7 +58,8 @@ const CursosLista = ({ temas }: CursosListaProps) => {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tema.cursos.map((curso) => {
-                const bloqueado = !curso.desbloqueado;
+                const bloqueado = !curso.acesso.liberado;
+                const motivoTexto = textoBloqueio(curso.acesso);
                 const conteudo = (
                   <Card className="group h-full overflow-hidden transition-shadow hover:shadow-md">
                     <div
@@ -89,6 +102,16 @@ const CursosLista = ({ temas }: CursosListaProps) => {
                         </span>
                         <span>{curso.qtdLicoes} lição(ões)</span>
                       </div>
+                      {bloqueado && (
+                        <p className="flex items-center gap-1.5 rounded-md bg-secondary px-3 py-2 text-xs font-medium text-muted-foreground">
+                          {curso.acesso.motivo === "premium" ? (
+                            <Crown className="h-3.5 w-3.5 text-yellow-600" />
+                          ) : (
+                            <Lock className="h-3.5 w-3.5" />
+                          )}
+                          {motivoTexto}
+                        </p>
+                      )}
                       {!bloqueado && (
                         <div className="space-y-1">
                           <Progress value={curso.percentualConcluido} />
@@ -102,6 +125,18 @@ const CursosLista = ({ temas }: CursosListaProps) => {
                     </div>
                   </Card>
                 );
+
+                if (curso.acesso.motivo === "premium") {
+                  return (
+                    <Link
+                      key={curso.id}
+                      href="/subscription"
+                      className="opacity-90"
+                    >
+                      {conteudo}
+                    </Link>
+                  );
+                }
 
                 return bloqueado ? (
                   <div key={curso.id} className="cursor-not-allowed opacity-70">

@@ -1,5 +1,6 @@
 import { db } from "@/app/_lib/prisma";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 // Usuario.clerkId é a ponte com o Clerk. Usuario.id (uuid próprio) é a FK
 // usada em todas as tabelas de progresso/gamificação. Como ainda não existe
@@ -9,7 +10,8 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 export const getOrCreateUsuarioAtual = async () => {
   const { userId } = await auth();
   if (!userId) {
-    throw new Error("Unauthorized");
+    // Sem sessão: manda para o login em vez de estourar erro na tela.
+    redirect("/login");
   }
 
   const usuarioExistente = await db.usuario.findUnique({

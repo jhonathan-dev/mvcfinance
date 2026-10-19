@@ -1,5 +1,6 @@
 import { db } from "@/app/_lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getAcessoCursos } from "@/app/_data/get-acesso-cursos";
 import { getOrCreateUsuarioAtual } from "@/app/_data/get-usuario-atual";
 
 // Questionário pronto para a tela de quiz: só questões/alternativas ativas,
@@ -25,6 +26,12 @@ export const getQuestionarioDetalhe = async (cursoId: string) => {
 
   if (!curso || !curso.questionario) {
     notFound();
+  }
+
+  // Curso bloqueado (premium, sequência ou trava do admin): volta pra lista.
+  const { acessos } = await getAcessoCursos();
+  if (!acessos[cursoId]?.liberado) {
+    redirect("/cursos");
   }
 
   const progresso = await db.progressoUsuarioQuestionario.findUnique({

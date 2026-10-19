@@ -1,5 +1,6 @@
 import { db } from "@/app/_lib/prisma";
 import { getOrCreateUsuarioAtual } from "@/app/_data/get-usuario-atual";
+import { getAcessoCursos } from "@/app/_data/get-acesso-cursos";
 
 // Lista todos os temas com seus cursos (ordenados), cada curso já com o
 // progresso real do usuário logado (quantas lições concluiu, % do curso).
@@ -7,7 +8,7 @@ import { getOrCreateUsuarioAtual } from "@/app/_data/get-usuario-atual";
 export const getCursosComProgresso = async () => {
   const usuario = await getOrCreateUsuarioAtual();
 
-  const [temas, calculos] = await Promise.all([
+  const [temas, calculos, { acessos, premium }] = await Promise.all([
     db.temaCurso.findMany({
       orderBy: { ordem: "asc" },
       include: {
@@ -18,6 +19,7 @@ export const getCursosComProgresso = async () => {
       },
     }),
     db.calculoDeProgresso.findMany({ where: { usuarioId: usuario.id } }),
+    getAcessoCursos(),
   ]);
 
   const progressoPorCurso = new Map(calculos.map((c) => [c.cursoId, c]));
@@ -33,11 +35,12 @@ export const getCursosComProgresso = async () => {
         licoesConcluidas: progresso?.licoesConcluidas ?? 0,
         percentualConcluido: progresso?.percentualConcluido ?? 0,
         iniciado: !!progresso,
+        acesso: acessos[curso.id],
       };
     }),
   }));
 
-  return { usuario, temas: temasComProgresso };
+  return { usuario, premium, temas: temasComProgresso };
 };
 
 export type CursosComProgresso = Awaited<

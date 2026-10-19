@@ -3,6 +3,7 @@
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getOrCreateUsuarioAtual } from "@/app/_data/get-usuario-atual";
+import { exigirAcessoAoCurso } from "@/app/_data/get-acesso-cursos";
 import {
   adicionarXpEVerificarConquistas,
   getConstantesXPAtual,
@@ -20,6 +21,7 @@ export const responderQuestionario = async (
   responderQuestionarioSchema.parse(params);
   const { cursoId, questionarioId, respostas } = params;
   const usuario = await getOrCreateUsuarioAtual();
+  await exigirAcessoAoCurso(cursoId);
 
   const questoes = await db.questao.findMany({
     where: { questionarioId, ativa: true },

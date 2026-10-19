@@ -3,6 +3,7 @@
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getOrCreateUsuarioAtual } from "@/app/_data/get-usuario-atual";
+import { exigirAcessoAoCurso } from "@/app/_data/get-acesso-cursos";
 import {
   adicionarXpEVerificarConquistas,
   getConstantesXPAtual,
@@ -18,6 +19,7 @@ export const concluirLicao = async (licaoId: string) => {
   if (!licao) {
     throw new Error("Lição não encontrada");
   }
+  await exigirAcessoAoCurso(licao.cursoId);
 
   const progressoExistente = await db.progressoUsuarioLicao.findUnique({
     where: { usuarioId_licaoId: { usuarioId: usuario.id, licaoId } },
