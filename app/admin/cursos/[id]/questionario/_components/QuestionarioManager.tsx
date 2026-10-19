@@ -96,13 +96,14 @@ const QuestionarioManager = ({
     if (!descricao.trim()) return toast.error("Descrição é obrigatória");
     setSavingQuestionario(true);
     try {
-      await upsertQuestionario({
+      const resultado = await upsertQuestionario({
         id: questionario?.id,
         cursoId,
         descricao,
         imagem,
         qtdQuestoes,
       });
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(
         questionario ? "Questionário atualizado" : "Questionário criado",
       );
@@ -189,7 +190,7 @@ const QuestionarioManager = ({
 
     setSaving(true);
     try {
-      await upsertQuestao({
+      const resultado = await upsertQuestao({
         id: editId ?? undefined,
         enunciado,
         ativa,
@@ -202,6 +203,7 @@ const QuestionarioManager = ({
           explicacao: a.explicacao || null,
         })),
       });
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(editId ? "Questão atualizada" : "Questão criada");
       setOpen(false);
     } catch (error) {
@@ -216,7 +218,8 @@ const QuestionarioManager = ({
 
   const removeQuestao = async (id: string) => {
     try {
-      await deleteQuestao(id, cursoId);
+      const resultado = await deleteQuestao(id, cursoId);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success("Questão excluída");
     } catch (error) {
       console.error(error);
@@ -226,7 +229,8 @@ const QuestionarioManager = ({
 
   const toggleQuestao = async (q: Questao) => {
     try {
-      await toggleQuestaoAtiva(q.id, cursoId);
+      const resultado = await toggleQuestaoAtiva(q.id, cursoId);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(q.ativa ? "Questão inativada" : "Questão ativada");
     } catch (error) {
       console.error(error);

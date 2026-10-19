@@ -125,7 +125,8 @@ const CursosManager = ({ cursos, temas }: CursosManagerProps) => {
 
     setSaving(true);
     try {
-      await upsertCurso({ id: editId ?? undefined, ...form });
+      const resultado = await upsertCurso({ id: editId ?? undefined, ...form });
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(editId ? "Curso atualizado" : "Curso criado");
       setOpen(false);
     } catch (error) {
@@ -140,7 +141,8 @@ const CursosManager = ({ cursos, temas }: CursosManagerProps) => {
 
   const remove = async (id: string) => {
     try {
-      await deleteCurso(id);
+      const resultado = await deleteCurso(id);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success("Curso excluído");
     } catch (error) {
       console.error(error);
@@ -150,7 +152,8 @@ const CursosManager = ({ cursos, temas }: CursosManagerProps) => {
 
   const toggle = async (c: CursoComRelacoes) => {
     try {
-      await toggleCursoDesbloqueado(c.id);
+      const resultado = await toggleCursoDesbloqueado(c.id);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(c.desbloqueado ? "Curso bloqueado" : "Curso desbloqueado");
     } catch (error) {
       console.error(error);

@@ -68,7 +68,12 @@ const ModulosManager = ({ modulos, cursoId }: ModulosManagerProps) => {
     if (!form.titulo.trim()) return toast.error("Título é obrigatório");
     setSaving(true);
     try {
-      await upsertModulo({ id: editId ?? undefined, cursoId, ...form });
+      const resultado = await upsertModulo({
+        id: editId ?? undefined,
+        cursoId,
+        ...form,
+      });
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(editId ? "Módulo atualizado" : "Módulo criado");
       setOpen(false);
     } catch (error) {
@@ -83,7 +88,8 @@ const ModulosManager = ({ modulos, cursoId }: ModulosManagerProps) => {
 
   const remove = async (id: string) => {
     try {
-      await deleteModulo(id);
+      const resultado = await deleteModulo(id);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success("Módulo excluído");
     } catch (error) {
       console.error(error);
@@ -93,7 +99,8 @@ const ModulosManager = ({ modulos, cursoId }: ModulosManagerProps) => {
 
   const toggle = async (m: ModuloComContador) => {
     try {
-      await toggleModuloDesbloqueado(m.id);
+      const resultado = await toggleModuloDesbloqueado(m.id);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(
         m.desbloqueado ? "Módulo bloqueado" : "Módulo desbloqueado",
       );

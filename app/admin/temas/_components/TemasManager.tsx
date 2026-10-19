@@ -53,7 +53,8 @@ const TemasManager = ({ temas }: { temas: TemaCurso[] }) => {
     if (!form.descricao.trim()) return toast.error("Descrição é obrigatória");
     setSaving(true);
     try {
-      await upsertTema({ id: editId ?? undefined, ...form });
+      const resultado = await upsertTema({ id: editId ?? undefined, ...form });
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(editId ? "Tema atualizado" : "Tema criado");
       setOpen(false);
     } catch (error) {
@@ -68,7 +69,8 @@ const TemasManager = ({ temas }: { temas: TemaCurso[] }) => {
 
   const remove = async (id: string) => {
     try {
-      await deleteTema({ id });
+      const resultado = await deleteTema({ id });
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success("Tema excluído");
     } catch (error) {
       console.error(error);

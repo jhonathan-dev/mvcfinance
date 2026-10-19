@@ -75,8 +75,7 @@ model Categoria {
   operacoes    Operacao[]
 
   // Não permite duas categorias com o mesmo nome dentro do mesmo tipo de
-  // operação (ex: duas categorias "Outros" em Despesa). Nomes iguais em
-  // tipos diferentes continuam permitidos.
+  // operação. Nomes iguais em tipos diferentes continuam permitidos.
   @@unique([tipoOperacaoId, nome])
 }
 
@@ -129,7 +128,7 @@ enum NivelEnsino {
 // da configuração global em ConstantesXP (ver abaixo).
 model Curso {
   id           String      @id @default(uuid())
-  titulo       String
+  titulo       String      @unique // não permite dois cursos com o mesmo título
   descricao    String
   imagem       String?
   duracao      Int // minutos
@@ -162,6 +161,9 @@ model Modulo {
 
   licoes          Licao[]
   licoesPorModulo LicoesPorModulo?
+
+  // Não permite dois módulos com o mesmo título dentro do mesmo curso.
+  @@unique([cursoId, titulo])
 }
 
 // imagem guarda a URL do arquivo no Vercel Blob (upload real).
@@ -184,6 +186,9 @@ model Licao {
   progresso       ProgressoUsuarioLicao[]
   anotacoes       AnotacaoLicao[]
   usuariosNaLicao Usuario[]               @relation("UsuarioLicaoAtual")
+
+  // Não permite duas lições com o mesmo título dentro do mesmo curso.
+  @@unique([cursoId, titulo])
 }
 
 // imagem guarda a URL do arquivo no Vercel Blob (upload real).
@@ -225,7 +230,7 @@ model Alternativa {
 // imgConquistaBloq/imgConquistaDesb guardam a URL do arquivo no Vercel Blob.
 model Conquista {
   id               String  @id @default(uuid())
-  titulo           String
+  titulo           String  @unique // não permite duas conquistas com o mesmo título
   preRequisito     String?
   imgConquistaBloq String?
   imgConquistaDesb String?
@@ -315,6 +320,12 @@ model CalculoDeProgresso {
   licoesConcluidas    Int      @default(0)
   percentualConcluido Int      @default(0) // 0-100
   atualizadoEm        DateTime @updatedAt
+
+  // Marca de "curso finalizado" (todas as lições + quiz aprovado). É o que
+  // garante que o XP de curso (ConstantesXP.qtdXpCurso) seja concedido uma
+  // única vez por usuário: a troca false -> true é feita de forma atômica.
+  cursoConcluido Boolean   @default(false)
+  concluidoEm    DateTime?
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   curso   Curso   @relation(fields: [cursoId], references: [id], onDelete: Cascade)

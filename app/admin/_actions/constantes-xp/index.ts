@@ -3,6 +3,7 @@
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
 import { UpdateConstantesXPSchema, updateConstantesXPSchema } from "./schema";
+import { executar, type Resultado } from "../_shared/resultado";
 
 // ConstantesXP é singleton: sempre existe exatamente uma linha (criada pelo
 // seed). Esta função garante isso mesmo que, por algum motivo, a linha não
@@ -16,11 +17,14 @@ export const getConstantesXP = async () => {
   });
 };
 
-export const updateConstantesXP = async (params: UpdateConstantesXPSchema) => {
-  const data = updateConstantesXPSchema.parse(params);
-  const atual = await getConstantesXP();
+export const updateConstantesXP = async (
+  params: UpdateConstantesXPSchema,
+): Promise<Resultado> =>
+  executar(async () => {
+    const data = updateConstantesXPSchema.parse(params);
+    const atual = await getConstantesXP();
 
-  await db.constantesXP.update({ where: { id: atual.id }, data });
+    await db.constantesXP.update({ where: { id: atual.id }, data });
 
-  revalidatePath("/admin/configuracao-xp");
-};
+    revalidatePath("/admin/configuracao-xp");
+  });

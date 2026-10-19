@@ -50,6 +50,8 @@ const QuizView = ({
     aprovado: boolean;
     correcao: CorrecaoItem[];
     xpGanho: number;
+    xpCurso: number;
+    cursoConcluido: boolean;
     conquistasDesbloqueadas: { titulo: string }[];
   } | null>(null);
 
@@ -73,6 +75,13 @@ const QuizView = ({
             ? `Aprovado! +${resposta.xpGanho} XP`
             : "Aprovado novamente!",
         );
+        if (resposta.cursoConcluido) {
+          toast.success(
+            resposta.xpCurso > 0
+              ? `🎉 Curso concluído! +${resposta.xpCurso} XP`
+              : "🎉 Curso concluído!",
+          );
+        }
       } else {
         toast.error("Você não atingiu a pontuação mínima. Tente novamente!");
       }

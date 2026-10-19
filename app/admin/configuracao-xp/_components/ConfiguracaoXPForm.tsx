@@ -27,7 +27,8 @@ const ConfiguracaoXPForm = ({ constantes }: { constantes: ConstantesXP }) => {
   const submit = async () => {
     setSaving(true);
     try {
-      await updateConstantesXP(form);
+      const resultado = await updateConstantesXP(form);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success("Configuração de XP atualizada");
     } catch (error) {
       console.error(error);

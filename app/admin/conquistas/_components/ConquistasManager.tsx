@@ -72,7 +72,7 @@ const ConquistasManager = ({ conquistas }: { conquistas: Conquista[] }) => {
     if (!form.titulo.trim()) return toast.error("Título é obrigatório");
     setSaving(true);
     try {
-      await upsertConquista({
+      const resultado = await upsertConquista({
         id: editId ?? undefined,
         titulo: form.titulo,
         preRequisito: form.preRequisito || null,
@@ -80,6 +80,7 @@ const ConquistasManager = ({ conquistas }: { conquistas: Conquista[] }) => {
         imgConquistaDesb: form.imgConquistaDesb,
         qtdXpMinimo: form.qtdXpMinimo,
       });
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(editId ? "Conquista atualizada" : "Conquista criada");
       setOpen(false);
     } catch (error) {
@@ -94,7 +95,8 @@ const ConquistasManager = ({ conquistas }: { conquistas: Conquista[] }) => {
 
   const remove = async (id: string) => {
     try {
-      await deleteConquista(id);
+      const resultado = await deleteConquista(id);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success("Conquista excluída");
     } catch (error) {
       console.error(error);

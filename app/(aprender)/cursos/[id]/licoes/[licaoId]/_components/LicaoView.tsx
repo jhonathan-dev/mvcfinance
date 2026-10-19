@@ -48,14 +48,20 @@ const LicaoView = ({
   const marcarConcluida = async () => {
     setConcluindo(true);
     try {
-      const { xpGanho, conquistasDesbloqueadas } = await concluirLicao(
-        licao.id,
-      );
+      const { xpGanho, xpCurso, cursoConcluido, conquistasDesbloqueadas } =
+        await concluirLicao(licao.id);
       setConcluida(true);
       if (xpGanho > 0) {
         toast.success(`Lição concluída! +${xpGanho} XP`);
       } else {
         toast.success("Lição já estava concluída");
+      }
+      if (cursoConcluido) {
+        toast.success(
+          xpCurso > 0
+            ? `🎉 Curso concluído! +${xpCurso} XP`
+            : "🎉 Curso concluído!",
+        );
       }
       conquistasDesbloqueadas.forEach((c) =>
         toast(`Conquista desbloqueada: ${c.titulo}`, { icon: "🏆" }),

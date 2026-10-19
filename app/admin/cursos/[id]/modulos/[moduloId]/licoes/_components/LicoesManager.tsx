@@ -93,12 +93,13 @@ const LicoesManager = ({ licoes, cursoId, moduloId }: LicoesManagerProps) => {
 
     setSaving(true);
     try {
-      await upsertLicao({
+      const resultado = await upsertLicao({
         id: editId ?? undefined,
         cursoId,
         moduloId,
         ...form,
       });
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(editId ? "Lição atualizada" : "Lição criada");
       setOpen(false);
     } catch (error) {
@@ -113,7 +114,8 @@ const LicoesManager = ({ licoes, cursoId, moduloId }: LicoesManagerProps) => {
 
   const remove = async (id: string) => {
     try {
-      await deleteLicao(id);
+      const resultado = await deleteLicao(id);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success("Lição excluída");
     } catch (error) {
       console.error(error);
@@ -123,7 +125,8 @@ const LicoesManager = ({ licoes, cursoId, moduloId }: LicoesManagerProps) => {
 
   const toggle = async (l: Licao) => {
     try {
-      await toggleLicaoDesbloqueada(l.id);
+      const resultado = await toggleLicaoDesbloqueada(l.id);
+      if (!resultado.ok) return toast.error(resultado.erro);
       toast.success(l.desbloqueado ? "Lição bloqueada" : "Lição desbloqueada");
     } catch (error) {
       console.error(error);

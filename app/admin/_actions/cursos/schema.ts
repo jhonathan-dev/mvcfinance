@@ -1,19 +1,28 @@
 import { z } from "zod";
+import {
+  corHexSchema,
+  imagemSchema,
+  minutosSchema,
+  ordemSchema,
+  textoSchema,
+  tituloSchema,
+} from "../_shared/validacao";
 
 export const upsertCursoSchema = z.object({
   id: z.string().uuid().optional(),
-  titulo: z.string().trim().min(1, { message: "O título é obrigatório." }),
-  descricao: z
-    .string()
-    .trim()
-    .min(1, { message: "A descrição é obrigatória." }),
-  imagem: z.string().trim().optional().nullable(),
-  duracao: z.number().int().positive({ message: "A duração é obrigatória." }),
-  nivelEnsino: z.enum(["INICIANTE", "INTERMEDIARIO", "AVANCADO"]),
-  cor: z.string().trim().min(1, { message: "A cor é obrigatória." }),
+  titulo: tituloSchema("O título do curso", 80),
+  descricao: textoSchema("A descrição do curso", 20, 500),
+  imagem: imagemSchema,
+  duracao: minutosSchema("A duração do curso", 6000),
+  nivelEnsino: z.enum(["INICIANTE", "INTERMEDIARIO", "AVANCADO"], {
+    error: "Selecione o nível de ensino.",
+  }),
+  cor: corHexSchema,
   desbloqueado: z.boolean(),
-  ordem: z.number().int().min(1),
-  temaCursoId: z.string().uuid({ message: "O tema é obrigatório." }),
+  ordem: ordemSchema,
+  temaCursoId: z
+    .string({ error: "O tema é obrigatório." })
+    .uuid("O tema é obrigatório."),
 });
 
-export type UpsertCursoSchema = z.infer<typeof upsertCursoSchema>;
+export type UpsertCursoSchema = z.input<typeof upsertCursoSchema>;
