@@ -11,7 +11,6 @@ import {
   Trophy,
   Sparkles,
   Shapes,
-  Wallet,
   ArrowLeft,
 } from "lucide-react";
 
@@ -25,7 +24,6 @@ const items = [
     label: "Configuração de XP",
     icon: Sparkles,
   },
-  { href: "/admin/planos", label: "Planos", icon: Wallet },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },
   { href: "/admin/tipos-operacao", label: "Tipos de Operação", icon: Shapes },
   {

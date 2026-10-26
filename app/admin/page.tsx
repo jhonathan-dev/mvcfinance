@@ -12,7 +12,6 @@ import {
   CreditCard,
   BookOpen,
   Trophy,
-  Wallet,
   Shapes,
 } from "lucide-react";
 import PageHeader from "./_components/PageHeader";
@@ -24,7 +23,6 @@ const AdminDashboard = async () => {
     cursos,
     temas,
     conquistas,
-    planosAtivos,
     categoriasAtivas,
     tiposAtivos,
     metodosAtivos,
@@ -32,7 +30,6 @@ const AdminDashboard = async () => {
     db.curso.count(),
     db.temaCurso.count(),
     db.conquista.count(),
-    db.plano.count({ where: { ativo: true } }),
     db.categoria.count({ where: { ativo: true } }),
     db.tipoOperacao.count({ where: { ativo: true } }),
     db.metodoPagamento.count({ where: { ativo: true } }),
@@ -59,13 +56,6 @@ const AdminDashboard = async () => {
       icon: Trophy,
       href: "/admin/conquistas",
       color: "text-yellow-600",
-    },
-    {
-      label: "Planos Ativos",
-      value: planosAtivos,
-      icon: Wallet,
-      href: "/admin/planos",
-      color: "text-rose-600",
     },
     {
       label: "Categorias Ativas",

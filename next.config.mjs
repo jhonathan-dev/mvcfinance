@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Gera o PDF do relatório no servidor. Deixar o jspdf fora do bundle do
+    // Next evita erros de módulo opcional e funciona igual na Vercel.
+    serverComponentsExternalPackages: ["jspdf"],
+  },
   images: {
     remotePatterns: [
       {
