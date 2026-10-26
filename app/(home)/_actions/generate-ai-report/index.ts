@@ -3,13 +3,14 @@
 import { db } from "@/app/_lib/prisma";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import OpenAI from "openai";
+import { limitesDoMes, NOMES_DOS_MESES } from "@/app/_lib/periodo";
 import { GenerateAiReportSchema, generateAiReportSchema } from "./schema";
 
 const DUMMY_REPORT =
   "### Relatório de Finanças Pessoais\n\n#### Resumo Geral das Finanças\nAs operações listadas foram analisadas e as seguintes informações foram extraídas para oferecer insights sobre suas finanças:\n\n- **Total de despesas:** R$ 19.497,56\n- **Total de investimentos:** R$ 14.141,47\n- **Total de depósitos:** R$ 10.100,00\n- **Categoria de maior despesa:** Alimentação\n\n#### Conclusão\nMelhorar sua vida financeira é um processo contínuo que envolve planejamento, monitoramento e ajustes regulares.";
 
-export const generateAiReport = async ({ month }: GenerateAiReportSchema) => {
-  generateAiReportSchema.parse({ month });
+export const generateAiReport = async (params: GenerateAiReportSchema) => {
+  const { month, year } = generateAiReportSchema.parse(params);
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
@@ -25,19 +26,17 @@ export const generateAiReport = async ({ month }: GenerateAiReportSchema) => {
   }
   const openAi = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  const year = new Date().getFullYear();
+  // Mesmo período que o Dashboard está mostrando (mês e ano escolhidos).
+  const { inicio, fim } = limitesDoMes({ ano: year, mes: month });
   const operacoes = await db.operacao.findMany({
     where: {
       usuarioId: userId,
-      data: {
-        gte: new Date(`${year}-${month}-01`),
-        lt: new Date(`${year}-${month}-31`),
-      },
+      data: { gte: inicio, lt: fim },
     },
     include: { categoria: true, tipoOperacao: true },
   });
 
-  const content = `Gere um relatório com insights sobre as minhas finanças, com dicas e orientações de como melhorar minha vida financeira. As operações estão divididas por ponto e vírgula. A estrutura de cada uma é {DATA}-{TIPO}-{VALOR}-{CATEGORIA}. São elas:
+  const content = `Gere um relatório com insights sobre as minhas finanças de ${NOMES_DOS_MESES[month - 1]} de ${year}, com dicas e orientações de como melhorar minha vida financeira. As operações estão divididas por ponto e vírgula. A estrutura de cada uma é {DATA}-{TIPO}-{VALOR}-{CATEGORIA}. São elas:
   ${operacoes
     .map(
       (operacao) =>

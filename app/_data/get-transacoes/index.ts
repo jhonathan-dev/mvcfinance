@@ -1,4 +1,5 @@
 import { db } from "@/app/_lib/prisma";
+import { inicioDoDia, inicioDoDiaSeguinte } from "@/app/_lib/periodo";
 import { Prisma } from "@prisma/client";
 
 // Quantas operações aparecem por página na tela de Operações.
@@ -78,8 +79,6 @@ export const lerFiltros = (
   };
 };
 
-const UM_DIA_MS = 24 * 60 * 60 * 1000;
-
 export const getTransacoes = async (
   usuarioId: string,
   filtros: FiltrosTransacoes,
@@ -92,13 +91,9 @@ export const getTransacoes = async (
     ...(filtros.metodoId && { metodoPagamentoId: filtros.metodoId }),
     ...((filtros.de || filtros.ate) && {
       data: {
-        ...(filtros.de && { gte: new Date(`${filtros.de}T00:00:00.000Z`) }),
+        ...(filtros.de && { gte: inicioDoDia(filtros.de) }),
         // "até" inclui o dia inteiro: vai até o começo do dia seguinte.
-        ...(filtros.ate && {
-          lt: new Date(
-            new Date(`${filtros.ate}T00:00:00.000Z`).getTime() + UM_DIA_MS,
-          ),
-        }),
+        ...(filtros.ate && { lt: inicioDoDiaSeguinte(filtros.ate) }),
       },
     }),
     ...((filtros.valorMin !== undefined || filtros.valorMax !== undefined) && {

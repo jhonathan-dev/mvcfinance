@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/app/_lib/prisma";
+import { limitesDoMes } from "@/app/_lib/periodo";
 import { gerarPdfRelatorio } from "./gerar-pdf";
 
 // GET /transactions/relatorio?mes=2026-10&formato=pdf|csv  (padrão: pdf)
@@ -54,14 +55,9 @@ export const GET = async (request: Request) => {
   const ano = Number(partes[1]);
   const numeroMes = Number(partes[2]);
 
+  const { inicio, fim } = limitesDoMes({ ano, mes: numeroMes });
   const operacoes = await db.operacao.findMany({
-    where: {
-      usuarioId: userId,
-      data: {
-        gte: new Date(Date.UTC(ano, numeroMes - 1, 1)),
-        lt: new Date(Date.UTC(ano, numeroMes, 1)),
-      },
-    },
+    where: { usuarioId: userId, data: { gte: inicio, lt: fim } },
     include: { categoria: true, tipoOperacao: true, metodoPagamento: true },
     orderBy: [{ data: "asc" }, { createdAt: "asc" }],
   });

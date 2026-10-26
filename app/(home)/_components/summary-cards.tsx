@@ -8,7 +8,6 @@ import SummaryCard from "./summary-card";
 import { OpcoesOperacao } from "@/app/_data/get-opcoes-operacao";
 
 interface SummaryCardsProps {
-  month: string;
   balance: number;
   investimentosTotal: number;
   depositosTotal: number;

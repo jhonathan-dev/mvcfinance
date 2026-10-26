@@ -1,8 +1,9 @@
 import { db } from "@/app/_lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { Periodo, limitesDoMes } from "@/app/_lib/periodo";
 import { PercentualPorTipo, TotalPorCategoria } from "./types";
 
-export const getDashboard = async (month: string) => {
+export const getDashboard = async (periodo: Periodo) => {
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
@@ -13,12 +14,12 @@ export const getDashboard = async (month: string) => {
   const tipoDespesa = tipos.find((t) => t.tipo === "Despesa");
   const tipoInvestimento = tipos.find((t) => t.tipo === "Investimento");
 
+  // Do dia 1 do mês até o dia 1 do mês seguinte (vale para 28, 29, 30 e 31
+  // dias, e para qualquer ano).
+  const { inicio, fim } = limitesDoMes(periodo);
   const where = {
     usuarioId: userId,
-    data: {
-      gte: new Date(`2026-${month}-01`),
-      lt: new Date(`2026-${month}-31`),
-    },
+    data: { gte: inicio, lt: fim },
   };
 
   const somarPorTipo = async (tipoOperacaoId?: string) =>
