@@ -52,15 +52,21 @@ const UpsertTransactionDialog = ({
   defaultValues,
   opcoes,
 }: UpsertTransactionDialogProps) => {
+  // A categoria padrão precisa ser do tipo padrão: o select de categoria só
+  // lista as categorias do tipo escolhido.
+  const tipoPadraoId = opcoes.tipos[0]?.id ?? "";
+  const categoriaPadraoId =
+    opcoes.categorias.find((c) => c.tipoOperacaoId === tipoPadraoId)?.id ?? "";
+
   const form = useForm<UpsertOperacaoSchema>({
     resolver: zodResolver(upsertOperacaoSchema),
     defaultValues: defaultValues ?? {
       valor: 0,
-      categoriaId: opcoes.categorias[0]?.id ?? "",
+      categoriaId: categoriaPadraoId,
       data: new Date(),
       titulo: "",
       metodoPagamentoId: opcoes.metodos[0]?.id ?? "",
-      tipoOperacaoId: opcoes.tipos[0]?.id ?? "",
+      tipoOperacaoId: tipoPadraoId,
     },
   });
 
@@ -147,9 +153,15 @@ const UpsertTransactionDialog = ({
                   <Select
                     onValueChange={(value) => {
                       field.onChange(value);
-                      form.setValue("categoriaId", "");
+                      // Já deixa selecionada a primeira categoria do novo tipo.
+                      const primeira = opcoes.categorias.find(
+                        (c) => c.tipoOperacaoId === value,
+                      );
+                      form.setValue("categoriaId", primeira?.id ?? "", {
+                        shouldValidate: form.formState.isSubmitted,
+                      });
                     }}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -174,10 +186,7 @@ const UpsertTransactionDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Método de Pagamento</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o método de pagamento" />
@@ -201,10 +210,7 @@ const UpsertTransactionDialog = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Categoria</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a categoria" />
