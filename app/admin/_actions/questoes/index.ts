@@ -2,6 +2,7 @@
 
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
+import { diferenca } from "@/app/_lib/auditoria";
 import { UpsertQuestaoSchema, upsertQuestaoSchema } from "./schema";
 import {
   ErroDeNegocio,
@@ -14,8 +15,10 @@ import { comGuardaDePublicacao } from "../_shared/publicacao";
 export const upsertQuestao = async (
   params: UpsertQuestaoSchema,
 ): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { id, alternativas, ...data } = upsertQuestaoSchema.parse(params);
+    ctx.acao(id ? "questao.editar" : "questao.criar");
+    ctx.alvo("Questão", id, data.enunciado);
 
     const questionario = await db.questionario.findUnique({
       where: { id: data.questionarioId },
@@ -51,9 +54,17 @@ export const upsertQuestao = async (
 
     if (id) {
       const atual = await db.questao.findUniqueOrThrow({ where: { id } });
+      ctx.detalhes({
+        alteracoes: diferenca(atual, data),
+        qtdAlternativas: alternativas.length,
+      });
       if (atual.questionarioId !== data.questionarioId) {
         throw new ErroDeNegocio("Esta questão pertence a outro questionário.");
       }
+    }
+
+    if (!id) {
+      ctx.detalhes({ dados: data, qtdAlternativas: alternativas.length });
     }
 
     await comGuardaDePublicacao(questionario.cursoId, async (tx) => {
@@ -93,7 +104,7 @@ export const upsertQuestao = async (
     });
 
     revalidatePath(`/admin/cursos/${questionario.cursoId}/questionario`);
-  });
+  }, "questao.editar");
 
 // Confere que a questão é mesmo do curso informado e devolve o questionário.
 const carregarQuestaoDoCurso = async (id: string, cursoId: string) => {
@@ -113,8 +124,9 @@ export const deleteQuestao = async (
   id: string,
   cursoId: string,
 ): Promise<Resultado> =>
-  executarAdmin(async () => {
-    await carregarQuestaoDoCurso(id, cursoId);
+  executarAdmin(async (ctx) => {
+    const questao = await carregarQuestaoDoCurso(id, cursoId);
+    ctx.alvo("Questão", id, questao.enunciado);
 
     // Cascade no schema apaga as alternativas junto.
     await comGuardaDePublicacao(cursoId, (tx) =>
@@ -122,18 +134,20 @@ export const deleteQuestao = async (
     );
 
     revalidatePath(`/admin/cursos/${cursoId}/questionario`);
-  });
+  }, "questao.excluir");
 
 export const toggleQuestaoAtiva = async (
   id: string,
   cursoId: string,
 ): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const questao = await carregarQuestaoDoCurso(id, cursoId);
+    ctx.acao(questao.ativa ? "questao.inativar" : "questao.ativar");
+    ctx.alvo("Questão", id, questao.enunciado);
 
     await comGuardaDePublicacao(cursoId, (tx) =>
       tx.questao.update({ where: { id }, data: { ativa: !questao.ativa } }),
     );
 
     revalidatePath(`/admin/cursos/${cursoId}/questionario`);
-  });
+  }, "questao.ativar");

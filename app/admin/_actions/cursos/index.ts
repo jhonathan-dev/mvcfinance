@@ -2,6 +2,7 @@
 
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
+import { diferenca } from "@/app/_lib/auditoria";
 import { UpsertCursoSchema, upsertCursoSchema } from "./schema";
 import { deleteImage } from "@/app/_actions/upload-image";
 import {
@@ -15,8 +16,10 @@ import { exigirCursoPublicavel } from "../_shared/publicacao";
 export const upsertCurso = async (
   params: UpsertCursoSchema,
 ): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { id, ...data } = upsertCursoSchema.parse(params);
+    ctx.acao(id ? "curso.editar" : "curso.criar");
+    ctx.alvo("Curso", id, data.titulo);
 
     const tema = await db.temaCurso.findUnique({
       where: { id: data.temaCursoId },
@@ -56,6 +59,7 @@ export const upsertCurso = async (
 
     if (id) {
       const atual = await db.curso.findUniqueOrThrow({ where: { id } });
+      ctx.detalhes(diferenca(atual, data));
 
       // Ligar o curso ("desbloqueado") exige que ele esteja completo.
       if (data.desbloqueado && !atual.desbloqueado) {
@@ -75,6 +79,7 @@ export const upsertCurso = async (
           "Crie o curso bloqueado, cadastre módulos, lições e questionário, e só então desbloqueie.",
         );
       }
+      ctx.detalhes({ dados: data });
       // Curso novo: cria junto a linha contadora de LicoesPorCurso já zerada.
       await db.curso.create({
         data: {
@@ -85,11 +90,12 @@ export const upsertCurso = async (
     }
 
     revalidatePath("/admin/cursos");
-  });
+  }, "curso.editar");
 
 export const deleteCurso = async (id: string): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const curso = await db.curso.findUniqueOrThrow({ where: { id } });
+    ctx.alvo("Curso", id, curso.titulo);
 
     // Excluir apagaria (em cascata) o histórico de estudo de quem já começou.
     const [calculos, licoesFeitas, quizzesFeitos] = await Promise.all([
@@ -114,11 +120,13 @@ export const deleteCurso = async (id: string): Promise<Resultado> =>
     }
 
     revalidatePath("/admin/cursos");
-  });
+  }, "curso.excluir");
 
 export const toggleCursoDesbloqueado = async (id: string): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const curso = await db.curso.findUniqueOrThrow({ where: { id } });
+    ctx.acao(curso.desbloqueado ? "curso.bloquear" : "curso.desbloquear");
+    ctx.alvo("Curso", id, curso.titulo);
 
     if (!curso.desbloqueado) {
       await exigirCursoPublicavel(db, id);
@@ -129,4 +137,4 @@ export const toggleCursoDesbloqueado = async (id: string): Promise<Resultado> =>
       data: { desbloqueado: !curso.desbloqueado },
     });
     revalidatePath("/admin/cursos");
-  });
+  }, "curso.desbloquear");

@@ -4,6 +4,7 @@ import { db } from "@/app/_lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { exigirAdmin } from "@/app/_lib/admin";
+import { diferenca, registrarAuditoria } from "@/app/_lib/auditoria";
 import {
   UpsertMetodoPagamentoSchema,
   upsertMetodoPagamentoSchema,
@@ -32,6 +33,10 @@ export const upsertMetodoPagamento = async (
     throw new Error("Já existe um método de pagamento com esse nome.");
   }
 
+  const atual = id
+    ? await db.metodoPagamento.findUnique({ where: { id } })
+    : null;
+
   try {
     await db.metodoPagamento.upsert({
       update: rest,
@@ -48,6 +53,14 @@ export const upsertMetodoPagamento = async (
     throw error;
   }
 
+  await registrarAuditoria({
+    acao: atual ? "metodo_pagamento.editar" : "metodo_pagamento.criar",
+    alvoTipo: "Método de pagamento",
+    alvoId: id,
+    alvoRotulo: rest.nome,
+    detalhes: atual ? diferenca(atual, rest) : { dados: rest },
+  });
+
   revalidatePath("/admin/metodos-pagamento");
   revalidatePath("/transactions");
   revalidatePath("/");
@@ -60,6 +73,14 @@ export const toggleMetodoPagamento = async (id: string) => {
     where: { id },
     data: { ativo: !metodo.ativo },
   });
+  await registrarAuditoria({
+    acao: metodo.ativo
+      ? "metodo_pagamento.inativar"
+      : "metodo_pagamento.ativar",
+    alvoTipo: "Método de pagamento",
+    alvoId: id,
+    alvoRotulo: metodo.nome,
+  });
   revalidatePath("/admin/metodos-pagamento");
   revalidatePath("/transactions");
   revalidatePath("/");
@@ -68,10 +89,11 @@ export const toggleMetodoPagamento = async (id: string) => {
 // Só exclui método de pagamento que nunca foi usado em uma transação; senão,
 // o caminho é inativar (ele some das telas de nova transação).
 export const deleteMetodoPagamento = async (id: string): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const metodo = await db.metodoPagamento.findUniqueOrThrow({
       where: { id },
     });
+    ctx.alvo("Método de pagamento", id, metodo.nome);
 
     const emUso = await db.operacao.count({ where: { metodoPagamentoId: id } });
     if (emUso > 0) {
@@ -88,4 +110,4 @@ export const deleteMetodoPagamento = async (id: string): Promise<Resultado> =>
     revalidatePath("/admin/metodos-pagamento");
     revalidatePath("/transactions");
     revalidatePath("/");
-  });
+  }, "metodo_pagamento.excluir");

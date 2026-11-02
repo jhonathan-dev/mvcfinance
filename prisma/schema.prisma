@@ -42,14 +42,34 @@ model Usuario {
   calculosProgresso      CalculoDeProgresso[]
 }
 
+// Registro das ações feitas no painel admin (quem fez, o quê, em quem, quando
+// e se deu certo). Só se insere e se lê: a aplicação nunca edita nem apaga.
+// `usuarioId` é opcional e vira NULL se a conta do admin for excluída; por
+// isso o registro também guarda uma "foto" de quem era o admin (id do Clerk,
+// e-mail e nome) — o histórico continua legível mesmo sem a conta.
 model Auditoria {
-  id        String   @id @default(uuid())
-  data      DateTime @default(now()) @db.Date
-  hora      DateTime @default(now()) @db.Time
-  descricao String
-  usuarioId String
+  id           String   @id @default(uuid())
+  data         DateTime @default(now()) @db.Date
+  hora         DateTime @default(now()) @db.Time
+  criadoEm     DateTime @default(now())
+  descricao    String
+  acao         String   @default("legado") // ex.: "curso.excluir"
+  alvoTipo     String? // ex.: "Curso", "Usuário"
+  alvoId       String?
+  alvoRotulo   String? // nome legível do alvo (título, e-mail...)
+  detalhes     Json? // só os campos que mudaram (de/para), sem dados sensíveis
+  sucesso      Boolean  @default(true)
+  erro         String?
+  adminClerkId String?
+  adminEmail   String?
+  adminNome    String?
+  usuarioId    String?
 
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([criadoEm])
+  @@index([acao])
+  @@index([adminClerkId])
 }
 
 // ============================================================

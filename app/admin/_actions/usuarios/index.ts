@@ -33,6 +33,16 @@ const exigirOutraConta = async (userId: string) => {
   }
 };
 
+// Nome legível para o log: e-mail (ou nome) do usuário, vindo do nosso banco.
+// Se a conta ainda não tem linha no banco, cai no id do Clerk.
+const rotuloDoUsuario = async (userId: string) => {
+  const usuario = await db.usuario.findUnique({
+    where: { clerkId: userId },
+    select: { emailUsuario: true, nomeUsuario: true },
+  });
+  return usuario?.emailUsuario ?? usuario?.nomeUsuario ?? userId;
+};
+
 const naoEncontrado = (error: unknown) =>
   isClerkAPIResponseError(error) && error.status === 404;
 
@@ -70,8 +80,10 @@ export const definirPapelAdmin = async (params: {
   userId: string;
   admin: boolean;
 }): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { userId, admin } = papelSchema.parse(params);
+    ctx.acao(admin ? "usuario.promover_admin" : "usuario.remover_admin");
+    ctx.alvo("Usuário", userId, await rotuloDoUsuario(userId));
     await exigirOutraConta(userId);
     try {
       // updateUserMetadata faz MERGE: preserva subscriptionPlan etc.
@@ -83,14 +95,16 @@ export const definirPapelAdmin = async (params: {
       traduzirErroDoClerk(error);
     }
     revalidatePath(PAGINA);
-  });
+  }, "usuario.promover_admin");
 
 export const definirPlanoPremium = async (params: {
   userId: string;
   premium: boolean;
 }): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { userId, premium } = planoSchema.parse(params);
+    ctx.acao(premium ? "usuario.tornar_premium" : "usuario.remover_premium");
+    ctx.alvo("Usuário", userId, await rotuloDoUsuario(userId));
     try {
       await clerkClient().users.updateUserMetadata(userId, {
         publicMetadata: { subscriptionPlan: premium ? "premium" : null },
@@ -99,14 +113,16 @@ export const definirPlanoPremium = async (params: {
       traduzirErroDoClerk(error);
     }
     revalidatePath(PAGINA);
-  });
+  }, "usuario.tornar_premium");
 
 export const definirBanimento = async (params: {
   userId: string;
   banido: boolean;
 }): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { userId, banido } = banimentoSchema.parse(params);
+    ctx.acao(banido ? "usuario.banir" : "usuario.desbanir");
+    ctx.alvo("Usuário", userId, await rotuloDoUsuario(userId));
     await exigirOutraConta(userId);
     try {
       if (banido) await clerkClient().users.banUser(userId);
@@ -115,13 +131,15 @@ export const definirBanimento = async (params: {
       traduzirErroDoClerk(error);
     }
     revalidatePath(PAGINA);
-  });
+  }, "usuario.banir");
 
 export const excluirUsuario = async (params: {
   userId: string;
 }): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const userId = usuarioIdSchema.parse(params.userId);
+    // O rótulo precisa ser lido ANTES: depois de excluir a linha não existe mais.
+    ctx.alvo("Usuário", userId, await rotuloDoUsuario(userId));
     await exigirOutraConta(userId);
 
     // 1º o Clerk (é o que pode falhar e não tem volta). Se a conta já não
@@ -134,20 +152,23 @@ export const excluirUsuario = async (params: {
 
     // 2º os dados do sistema. As operações guardam o id do Clerk (sem
     // relação no banco), então são apagadas à parte; o Usuario apaga em
-    // cascata progresso, XP, conquistas, anotações e auditoria.
+    // cascata progresso, XP, conquistas e anotações. A auditoria NÃO é apagada:
+    // o vínculo com o Usuario vira NULL e o log guarda e-mail/nome do admin.
     await db.$transaction([
       db.operacao.deleteMany({ where: { usuarioId: userId } }),
       db.usuario.deleteMany({ where: { clerkId: userId } }),
     ]);
     revalidatePath(PAGINA);
-  });
+  }, "usuario.excluir");
 
 export const convidarUsuario = async (params: {
   email: string;
   admin: boolean;
 }): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { email, admin } = conviteSchema.parse(params);
+    ctx.alvo("Convite", null, email);
+    ctx.detalhes({ comoAdmin: admin });
     try {
       await clerkClient().invitations.createInvitation({
         emailAddress: email,
@@ -160,17 +181,18 @@ export const convidarUsuario = async (params: {
       traduzirErroDoClerk(error);
     }
     revalidatePath(PAGINA);
-  });
+  }, "usuario.convidar");
 
 export const revogarConvite = async (params: {
   conviteId: string;
 }): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const conviteId = conviteIdSchema.parse(params.conviteId);
+    ctx.alvo("Convite", conviteId, null);
     try {
       await clerkClient().invitations.revokeInvitation(conviteId);
     } catch (error) {
       traduzirErroDoClerk(error);
     }
     revalidatePath(PAGINA);
-  });
+  }, "usuario.revogar_convite");

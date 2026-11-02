@@ -2,6 +2,7 @@
 
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
+import { diferenca } from "@/app/_lib/auditoria";
 import { UpsertLicaoSchema, upsertLicaoSchema } from "./schema";
 import { deleteImage } from "@/app/_actions/upload-image";
 import {
@@ -25,8 +26,10 @@ const revalidarTudo = (cursoId: string, moduloId: string) => {
 export const upsertLicao = async (
   params: UpsertLicaoSchema,
 ): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { id, ...data } = upsertLicaoSchema.parse(params);
+    ctx.acao(id ? "licao.editar" : "licao.criar");
+    ctx.alvo("Lição", id, data.titulo);
 
     // O módulo precisa existir e pertencer ao curso informado.
     const modulo = await db.modulo.findUnique({ where: { id: data.moduloId } });
@@ -70,6 +73,7 @@ export const upsertLicao = async (
           "Não é possível mover uma lição para outro curso.",
         );
       }
+      ctx.detalhes(diferenca(atual, data));
       if (atual.imagem && atual.imagem !== data.imagem)
         imagemAntiga = atual.imagem;
       if (atual.moduloId !== data.moduloId) moduloAnteriorId = atual.moduloId;
@@ -78,6 +82,7 @@ export const upsertLicao = async (
         tx.licao.update({ where: { id }, data }),
       );
     } else {
+      ctx.detalhes({ dados: data });
       await db.licao.create({ data });
     }
 
@@ -92,11 +97,12 @@ export const upsertLicao = async (
     await recalcularLicoesPorCurso(data.cursoId);
 
     revalidarTudo(data.cursoId, data.moduloId);
-  });
+  }, "licao.editar");
 
 export const deleteLicao = async (id: string): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const licao = await db.licao.findUniqueOrThrow({ where: { id } });
+    ctx.alvo("Lição", id, licao.titulo);
 
     // Apagar uma lição que alunos já concluíram bagunçaria o % de progresso
     // deles (o total do curso muda, mas o % guardado não).
@@ -121,14 +127,16 @@ export const deleteLicao = async (id: string): Promise<Resultado> =>
     await recalcularLicoesPorCurso(licao.cursoId);
 
     revalidarTudo(licao.cursoId, licao.moduloId);
-  });
+  }, "licao.excluir");
 
 export const toggleLicaoDesbloqueada = async (id: string): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const licao = await db.licao.findUniqueOrThrow({ where: { id } });
+    ctx.acao(licao.desbloqueado ? "licao.bloquear" : "licao.desbloquear");
+    ctx.alvo("Lição", id, licao.titulo);
     await db.licao.update({
       where: { id },
       data: { desbloqueado: !licao.desbloqueado },
     });
     revalidarTudo(licao.cursoId, licao.moduloId);
-  });
+  }, "licao.desbloquear");

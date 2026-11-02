@@ -14,6 +14,7 @@ import {
   Trophy,
   Shapes,
   Users,
+  ScrollText,
 } from "lucide-react";
 import PageHeader from "./_components/PageHeader";
 import { exigirAdminNaPagina } from "@/app/_lib/admin";
@@ -25,6 +26,7 @@ const AdminDashboard = async () => {
     temas,
     conquistas,
     usuarios,
+    acoesAuditadas,
     categoriasAtivas,
     tiposAtivos,
     metodosAtivos,
@@ -33,6 +35,7 @@ const AdminDashboard = async () => {
     db.temaCurso.count(),
     db.conquista.count(),
     db.usuario.count(),
+    db.auditoria.count(),
     db.categoria.count({ where: { ativo: true } }),
     db.tipoOperacao.count({ where: { ativo: true } }),
     db.metodoPagamento.count({ where: { ativo: true } }),
@@ -66,6 +69,13 @@ const AdminDashboard = async () => {
       icon: Users,
       href: "/admin/usuarios",
       color: "text-rose-600",
+    },
+    {
+      label: "Ações Auditadas",
+      value: acoesAuditadas,
+      icon: ScrollText,
+      href: "/admin/auditoria",
+      color: "text-slate-600",
     },
     {
       label: "Categorias Ativas",

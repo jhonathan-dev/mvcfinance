@@ -4,6 +4,7 @@ import { db } from "@/app/_lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { exigirAdmin } from "@/app/_lib/admin";
+import { diferenca, registrarAuditoria } from "@/app/_lib/auditoria";
 import { UpsertTipoOperacaoSchema, upsertTipoOperacaoSchema } from "./schema";
 import {
   ErroDeNegocio,
@@ -27,11 +28,11 @@ export const upsertTipoOperacao = async (params: UpsertTipoOperacaoSchema) => {
     throw new Error("Já existe um tipo de operação com esse nome.");
   }
 
-  if (id) {
-    const atual = await db.tipoOperacao.findUniqueOrThrow({ where: { id } });
-    if (atual.icone && atual.icone !== rest.icone) {
-      await deleteImage(atual.icone);
-    }
+  const atual = id
+    ? await db.tipoOperacao.findUniqueOrThrow({ where: { id } })
+    : null;
+  if (atual?.icone && atual.icone !== rest.icone) {
+    await deleteImage(atual.icone);
   }
 
   try {
@@ -50,6 +51,14 @@ export const upsertTipoOperacao = async (params: UpsertTipoOperacaoSchema) => {
     throw error;
   }
 
+  await registrarAuditoria({
+    acao: atual ? "tipo_operacao.editar" : "tipo_operacao.criar",
+    alvoTipo: "Tipo de operação",
+    alvoId: id,
+    alvoRotulo: rest.tipo,
+    detalhes: atual ? diferenca(atual, rest) : { dados: rest },
+  });
+
   revalidatePath("/admin/tipos-operacao");
   revalidatePath("/admin/categorias");
   revalidatePath("/transactions");
@@ -60,6 +69,12 @@ export const toggleTipoOperacao = async (id: string) => {
   await exigirAdmin();
   const tipo = await db.tipoOperacao.findUniqueOrThrow({ where: { id } });
   await db.tipoOperacao.update({ where: { id }, data: { ativo: !tipo.ativo } });
+  await registrarAuditoria({
+    acao: tipo.ativo ? "tipo_operacao.inativar" : "tipo_operacao.ativar",
+    alvoTipo: "Tipo de operação",
+    alvoId: id,
+    alvoRotulo: tipo.tipo,
+  });
   revalidatePath("/admin/tipos-operacao");
   revalidatePath("/transactions");
   revalidatePath("/");
@@ -69,8 +84,9 @@ export const toggleTipoOperacao = async (id: string) => {
 // categorias e das transações: só pode ser excluído se não tiver nenhuma das
 // duas. Caso contrário, o caminho é inativar.
 export const deleteTipoOperacao = async (id: string): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const tipo = await db.tipoOperacao.findUniqueOrThrow({ where: { id } });
+    ctx.alvo("Tipo de operação", id, tipo.tipo);
 
     const [categorias, operacoes] = await Promise.all([
       db.categoria.count({ where: { tipoOperacaoId: id } }),
@@ -96,4 +112,4 @@ export const deleteTipoOperacao = async (id: string): Promise<Resultado> =>
     revalidatePath("/admin/categorias");
     revalidatePath("/transactions");
     revalidatePath("/");
-  });
+  }, "tipo_operacao.excluir");

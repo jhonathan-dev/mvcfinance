@@ -2,6 +2,7 @@
 
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
+import { diferenca } from "@/app/_lib/auditoria";
 import { UpsertConquistaSchema, upsertConquistaSchema } from "./schema";
 import { deleteImage } from "@/app/_actions/upload-image";
 import {
@@ -14,8 +15,10 @@ import { chave } from "../_shared/validacao";
 export const upsertConquista = async (
   params: UpsertConquistaSchema,
 ): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { id, ...data } = upsertConquistaSchema.parse(params);
+    ctx.acao(id ? "conquista.editar" : "conquista.criar");
+    ctx.alvo("Conquista", id, data.titulo);
 
     const conquistas = await db.conquista.findMany({
       select: { id: true, titulo: true, qtdXpMinimo: true },
@@ -42,6 +45,7 @@ export const upsertConquista = async (
 
     if (id) {
       const atual = await db.conquista.findUniqueOrThrow({ where: { id } });
+      ctx.detalhes(diferenca(atual, data));
       await db.conquista.update({ where: { id }, data });
 
       if (
@@ -57,15 +61,17 @@ export const upsertConquista = async (
         await deleteImage(atual.imgConquistaDesb);
       }
     } else {
+      ctx.detalhes({ dados: data });
       await db.conquista.create({ data });
     }
 
     revalidatePath("/admin/conquistas");
-  });
+  }, "conquista.editar");
 
 export const deleteConquista = async (id: string): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const conquista = await db.conquista.findUniqueOrThrow({ where: { id } });
+    ctx.alvo("Conquista", id, conquista.titulo);
 
     await db.conquista.delete({ where: { id } });
 
@@ -75,4 +81,4 @@ export const deleteConquista = async (id: string): Promise<Resultado> =>
       await deleteImage(conquista.imgConquistaDesb);
 
     revalidatePath("/admin/conquistas");
-  });
+  }, "conquista.excluir");

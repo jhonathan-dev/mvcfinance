@@ -4,6 +4,7 @@ import { db } from "@/app/_lib/prisma";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { exigirAdmin } from "@/app/_lib/admin";
+import { diferenca, registrarAuditoria } from "@/app/_lib/auditoria";
 import { UpsertCategoriaSchema, upsertCategoriaSchema } from "./schema";
 import {
   ErroDeNegocio,
@@ -32,6 +33,8 @@ export const upsertCategoria = async (params: UpsertCategoriaSchema) => {
     );
   }
 
+  const atual = id ? await db.categoria.findUnique({ where: { id } }) : null;
+
   try {
     await db.categoria.upsert({
       update: rest,
@@ -52,6 +55,14 @@ export const upsertCategoria = async (params: UpsertCategoriaSchema) => {
     throw error;
   }
 
+  await registrarAuditoria({
+    acao: atual ? "categoria.editar" : "categoria.criar",
+    alvoTipo: "Categoria",
+    alvoId: id,
+    alvoRotulo: rest.nome,
+    detalhes: atual ? diferenca(atual, rest) : { dados: rest },
+  });
+
   revalidatePath("/admin/categorias");
   revalidatePath("/transactions");
   revalidatePath("/");
@@ -64,6 +75,12 @@ export const toggleCategoria = async (id: string) => {
     where: { id },
     data: { ativo: !categoria.ativo },
   });
+  await registrarAuditoria({
+    acao: categoria.ativo ? "categoria.inativar" : "categoria.ativar",
+    alvoTipo: "Categoria",
+    alvoId: id,
+    alvoRotulo: categoria.nome,
+  });
   revalidatePath("/admin/categorias");
   revalidatePath("/transactions");
   revalidatePath("/");
@@ -74,8 +91,9 @@ export const toggleCategoria = async (id: string) => {
 // histórico — nesse caso o caminho é inativar (botão de liga/desliga), que a
 // tira das telas de nova transação sem mexer nas antigas.
 export const deleteCategoria = async (id: string): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const categoria = await db.categoria.findUniqueOrThrow({ where: { id } });
+    ctx.alvo("Categoria", id, categoria.nome);
 
     const emUso = await db.operacao.count({ where: { categoriaId: id } });
     if (emUso > 0) {
@@ -89,4 +107,4 @@ export const deleteCategoria = async (id: string): Promise<Resultado> =>
     revalidatePath("/admin/categorias");
     revalidatePath("/transactions");
     revalidatePath("/");
-  });
+  }, "categoria.excluir");

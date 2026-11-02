@@ -13,6 +13,7 @@ import {
   Shapes,
   ArrowLeft,
   Users,
+  ScrollText,
 } from "lucide-react";
 
 const items = [
@@ -26,6 +27,7 @@ const items = [
     icon: Sparkles,
   },
   { href: "/admin/usuarios", label: "Usuários", icon: Users },
+  { href: "/admin/auditoria", label: "Auditoria", icon: ScrollText },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },
   { href: "/admin/tipos-operacao", label: "Tipos de Operação", icon: Shapes },
   {

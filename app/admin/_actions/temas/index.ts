@@ -2,6 +2,7 @@
 
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
+import { diferenca } from "@/app/_lib/auditoria";
 import { UpsertTemaSchema, upsertTemaSchema, deleteTemaSchema } from "./schema";
 import {
   ErroDeNegocio,
@@ -13,8 +14,10 @@ import { chave } from "../_shared/validacao";
 export const upsertTema = async (
   params: UpsertTemaSchema,
 ): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { id, ...dados } = upsertTemaSchema.parse(params);
+    ctx.acao(id ? "tema.editar" : "tema.criar");
+    ctx.alvo("Tema de curso", id, dados.titulo);
 
     const temas = await db.temaCurso.findMany({
       select: { id: true, titulo: true, ordem: true },
@@ -41,17 +44,22 @@ export const upsertTema = async (
     }
 
     if (id) {
+      const atual = await db.temaCurso.findUniqueOrThrow({ where: { id } });
+      ctx.detalhes(diferenca(atual, dados));
       await db.temaCurso.update({ where: { id }, data: dados });
     } else {
+      ctx.detalhes({ dados });
       await db.temaCurso.create({ data: dados });
     }
 
     revalidatePath("/admin/temas");
-  });
+  }, "tema.editar");
 
 export const deleteTema = async (params: { id: string }): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     deleteTemaSchema.parse(params);
+    const tema = await db.temaCurso.findUnique({ where: { id: params.id } });
+    ctx.alvo("Tema de curso", params.id, tema?.titulo);
 
     const qtdCursos = await db.curso.count({
       where: { temaCursoId: params.id },
@@ -64,4 +72,4 @@ export const deleteTema = async (params: { id: string }): Promise<Resultado> =>
 
     await db.temaCurso.delete({ where: { id: params.id } });
     revalidatePath("/admin/temas");
-  });
+  }, "tema.excluir");

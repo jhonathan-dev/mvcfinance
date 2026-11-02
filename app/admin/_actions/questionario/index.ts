@@ -2,6 +2,7 @@
 
 import { db } from "@/app/_lib/prisma";
 import { revalidatePath } from "next/cache";
+import { diferenca } from "@/app/_lib/auditoria";
 import { UpsertQuestionarioSchema, upsertQuestionarioSchema } from "./schema";
 import { deleteImage } from "@/app/_actions/upload-image";
 import {
@@ -14,19 +15,22 @@ import { comGuardaDePublicacao } from "../_shared/publicacao";
 export const upsertQuestionario = async (
   params: UpsertQuestionarioSchema,
 ): Promise<Resultado> =>
-  executarAdmin(async () => {
+  executarAdmin(async (ctx) => {
     const { id, cursoId, ...data } = upsertQuestionarioSchema.parse(params);
+    ctx.acao(id ? "questionario.editar" : "questionario.criar");
 
     const curso = await db.curso.findUnique({ where: { id: cursoId } });
     if (!curso) {
       throw new ErroDeNegocio("O curso não existe mais. Atualize a página.");
     }
+    ctx.alvo("Questionário", id, `Curso: ${curso.titulo}`);
 
     if (id) {
       const atual = await db.questionario.findUniqueOrThrow({ where: { id } });
       if (atual.cursoId !== cursoId) {
         throw new ErroDeNegocio("Este questionário pertence a outro curso.");
       }
+      ctx.detalhes(diferenca(atual, data));
       await db.questionario.update({ where: { id }, data });
 
       if (atual.imagem && atual.imagem !== data.imagem) {
@@ -42,6 +46,7 @@ export const upsertQuestionario = async (
           "Este curso já tem um questionário. Atualize a página para editá-lo.",
         );
       }
+      ctx.detalhes({ dados: data });
       // Um questionário novo nasce sem questões: se o curso já estiver
       // desbloqueado, o guarda recusa (os alunos ficariam presos num quiz
       // vazio). Bloqueie o curso, cadastre as questões e desbloqueie de novo.
@@ -51,4 +56,4 @@ export const upsertQuestionario = async (
     }
 
     revalidatePath(`/admin/cursos/${cursoId}/questionario`);
-  });
+  }, "questionario.editar");
