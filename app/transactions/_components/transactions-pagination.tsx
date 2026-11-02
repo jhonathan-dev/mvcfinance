@@ -34,13 +34,13 @@ const TransactionsPagination = ({
   const fim = Math.min(pagina * porPagina, total);
 
   return (
-    <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+    <div className="sticky bottom-0 z-10 -mx-6 -mb-6 flex shrink-0 flex-col items-center justify-between gap-3 border-t bg-background px-6 py-3 sm:flex-row">
       <p className="text-sm text-muted-foreground">
         {total === 0
           ? "Nenhuma operação encontrada"
           : `Mostrando ${inicio}–${fim} de ${total} ${total === 1 ? "operação" : "operações"}`}
       </p>
-      {totalPaginas > 1 && (
+      {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -64,7 +64,7 @@ const TransactionsPagination = ({
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
-      )}
+      }
     </div>
   );
 };

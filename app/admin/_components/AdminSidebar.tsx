@@ -12,6 +12,7 @@ import {
   Sparkles,
   Shapes,
   ArrowLeft,
+  Users,
 } from "lucide-react";
 
 const items = [
@@ -24,6 +25,7 @@ const items = [
     label: "Configuração de XP",
     icon: Sparkles,
   },
+  { href: "/admin/usuarios", label: "Usuários", icon: Users },
   { href: "/admin/categorias", label: "Categorias", icon: Tags },
   { href: "/admin/tipos-operacao", label: "Tipos de Operação", icon: Shapes },
   {
