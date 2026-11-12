@@ -30,15 +30,24 @@ const AiReportButton = ({
   hasPremiumPlan,
 }: AiReportButtonProps) => {
   const [report, setReport] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [reportIsLoading, setReportIsLoading] = useState(false);
   const handleGenerateReportClick = async () => {
+    setReportIsLoading(true);
+    setError(null);
     try {
-      setReportIsLoading(true);
-      const aiReport = await generateAiReport({ month, year });
-      console.log({ aiReport });
-      setReport(aiReport);
-    } catch (error) {
-      console.error(error);
+      const resultado = await generateAiReport({ month, year });
+      if (resultado.ok) {
+        setReport(resultado.relatorio);
+      } else {
+        setReport(null);
+        setError(resultado.erro);
+      }
+    } catch (e) {
+      // Falha de rede ou do servidor antes de a action responder.
+      console.error(e);
+      setReport(null);
+      setError("Não foi possível gerar o relatório agora. Tente novamente.");
     } finally {
       setReportIsLoading(false);
     }
@@ -48,6 +57,7 @@ const AiReportButton = ({
       onOpenChange={(open) => {
         if (!open) {
           setReport(null);
+          setError(null);
         }
       }}
     >
@@ -67,9 +77,19 @@ const AiReportButton = ({
                 sobre suas finanças.
               </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="prose max-h-[450px] text-primary prose-h3:text-primary prose-h4:text-primary prose-strong:text-primary">
-              <Markdown>{report}</Markdown>
-            </ScrollArea>
+            {error && (
+              <p
+                role="alert"
+                className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+              >
+                {error}
+              </p>
+            )}
+            {report && (
+              <ScrollArea className="prose max-h-[450px] text-primary prose-h3:text-primary prose-h4:text-primary prose-strong:text-primary">
+                <Markdown>{report}</Markdown>
+              </ScrollArea>
+            )}
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="ghost">Cancelar</Button>
