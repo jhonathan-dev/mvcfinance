@@ -14,12 +14,20 @@ const AcquirePlanButton = () => {
   const handleManagePlanClick = async () => {
     setAbrindoPortal(true);
     setErroPortal(null);
+    // Abre a aba já no clique (antes do await) para o navegador não bloquear
+    // o pop-up; o endereço do portal é preenchido quando o servidor responder.
+    const aba = window.open("", "_blank");
     const resultado = await createStripePortal();
     if (resultado.ok) {
-      window.location.href = resultado.url;
-      return;
+      if (aba) {
+        aba.location.href = resultado.url;
+      } else {
+        window.location.href = resultado.url;
+      }
+    } else {
+      aba?.close();
+      setErroPortal(resultado.erro);
     }
-    setErroPortal(resultado.erro);
     setAbrindoPortal(false);
   };
   const handleAcquirePlanClick = async () => {
