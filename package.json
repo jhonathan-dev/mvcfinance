@@ -9,7 +9,14 @@
     "lint": "next lint",
     "prepare": "husky",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:conteudo": "tsx prisma/seed-conteudo-educacional.ts"
+    "db:seed:conteudo": "tsx prisma/seed-conteudo-educacional.ts",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prepare": "husky",
+    "postinstall": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -17,12 +17,14 @@ import type {
   Curso,
   Modulo,
   Licao,
+  Questionario,
   ProgressoUsuarioQuestionario,
 } from "@prisma/client";
 
 type LicaoComProgresso = Licao & { concluida: boolean };
 type ModuloComLicoes = Modulo & { licoes: LicaoComProgresso[] };
 type CursoCompleto = Curso & {
+  questionario: Questionario | null;
   modulos: ModuloComLicoes[];
   qtdLicoes: number;
   duracaoTotal: number;
