@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Mulish } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import Footer from "./_components/footer";
 
 const mulish = Mulish({
   subsets: ["latin-ext"],
@@ -21,8 +22,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${mulish.className} antialiased`}>
         <ClerkProvider>
-          {" "}
-          <div className="flex h-full flex-col overflow-hidden">{children}</div>
+          <div className="flex h-full flex-col overflow-hidden">
+            <div className="min-h-0 flex-1">
+              <div className="h-full">{children}</div>
+            </div>
+            <Footer />
+          </div>
         </ClerkProvider>
       </body>
     </html>
