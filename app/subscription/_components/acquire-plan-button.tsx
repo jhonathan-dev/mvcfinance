@@ -4,10 +4,24 @@ import { Button } from "@/app/_components/ui/button";
 import { createStripeCheckout } from "../_actions/create-stripe-checkout";
 import { loadStripe } from "@stripe/stripe-js";
 import { useUser } from "@clerk/nextjs";
-import Link from "next/link";
+import { useState } from "react";
+import { createStripePortal } from "../_actions/create-stripe-portal";
 
 const AcquirePlanButton = () => {
   const { user } = useUser();
+  const [abrindoPortal, setAbrindoPortal] = useState(false);
+  const [erroPortal, setErroPortal] = useState<string | null>(null);
+  const handleManagePlanClick = async () => {
+    setAbrindoPortal(true);
+    setErroPortal(null);
+    const resultado = await createStripePortal();
+    if (resultado.ok) {
+      window.location.href = resultado.url;
+      return;
+    }
+    setErroPortal(resultado.erro);
+    setAbrindoPortal(false);
+  };
   const handleAcquirePlanClick = async () => {
     const { sessionId } = await createStripeCheckout();
     if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
@@ -24,13 +38,21 @@ const AcquirePlanButton = () => {
   const hasPremiumPlan = user?.publicMetadata.subscriptionPlan == "premium";
   if (hasPremiumPlan) {
     return (
-      <Button className="w-full rounded-full font-bold" variant="link">
-        <Link
-          href={`${process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL as string}?prefilled_email=${user.emailAddresses[0].emailAddress}`}
+      <div className="w-full">
+        <Button
+          className="w-full rounded-full font-bold"
+          variant="link"
+          onClick={handleManagePlanClick}
+          disabled={abrindoPortal}
         >
-          Gerenciar plano
-        </Link>
-      </Button>
+          {abrindoPortal ? "Abrindo..." : "Gerenciar plano"}
+        </Button>
+        {erroPortal && (
+          <p role="alert" className="mt-2 text-center text-sm text-red-600">
+            {erroPortal}
+          </p>
+        )}
+      </div>
     );
   }
   return (
